@@ -445,34 +445,17 @@
         const DOWN_PAYMENT_RATE = 0.30;
         const GRAPHIC_FEE_TTC = 150;
         
-        // --- NOUVEAU: Logique et assistants de tri ---
-        // Crée une map pour obtenir l'index de tri d'un produit en fonction de sa position dans la liste principale
+        // --- Sorting Logic & Helpers ---
         const productSortOrderMap = new Map(allAvailableProducts.map((p, i) => [p.name, i]));
 
-        // Crée un ordre de tri maître pour toutes les tailles possibles afin d'assurer la cohérence
         const masterSizeOrder = [
-            // Enfants
-            '6A', '8A', '10A', '12A', '14A', '16A',
-            // Sous-vêtements
-            '2XS/XS',
-            // Apparel principal
-            'XXS', 'XS', 'S', 'M', 'L', 'XL', 'XXL',
-            // Sous-vêtements
-            'S/M', 'L/XL', '2XL/3XL',
-            // Apparel principal (suite)
-            '3XL', '4XL', '5XL', '6XL',
-            // Chaussettes & Couvre-chaussures (par taille numérique)
-            'S/M (35/40)', '36/38', '38/39', '39/41', 'L/XL (41/46)', '40/42', '42/44', '43/44', '44/45', '45/46', '45/47', '47/48',
-            // Spécifiques (Manchettes, Jambières)
-            "P (Biceps 27/31cm)", "G (Biceps 31/34cm)",
-            "P (Cuisses 39/44cm)", "G (Cuisses 44/50cm)",
-            // Unique
-            'U'
+            '6A', '8A', '10A', '12A', '14A', '16A', '2XS/XS', 'XXS', 'XS', 'S', 'M', 'L', 'XL', 'XXL',
+            'S/M', 'L/XL', '2XL/3XL', '3XL', '4XL', '5XL', '6XL', 'S/M (35/40)', '36/38', '38/39', 
+            '39/41', 'L/XL (41/46)', '40/42', '42/44', '43/44', '44/45', '45/46', '45/47', '47/48',
+            "P (Biceps 27/31cm)", "G (Biceps 31/34cm)", "P (Cuisses 39/44cm)", "G (Cuisses 44/50cm)", 'U'
         ];
-        // Crée une map pour obtenir rapidement l'index de tri d'une taille
         const sizeSortOrderMap = new Map(masterSizeOrder.map((s, i) => [s, i]));
 
-        // Fonction pour trier un tableau de lignes de commande
         const sortLineItems = (items) => {
             return [...items].sort((a, b) => {
                 const productAOrder = productSortOrderMap.get(a.productName) ?? 9999;
@@ -481,7 +464,6 @@
             });
         };
 
-        // Fonction pour trier un tableau de clés de taille (ex: ['M', 'S', 'L'] -> ['S', 'M', 'L'])
         const sortSizeKeys = (sizeKeys) => {
             return [...sizeKeys].sort((a, b) => {
                 const sizeAOrder = sizeSortOrderMap.get(a) ?? 999;
@@ -493,64 +475,33 @@
 
         // --- APPLICATION STATE ---
         let state = {
-            // UI State
-            isGeneratingSpecificity: false,
-            isSaving: false,
-            activeTab: 'order-creation',
-            isSavedOrdersTabLocked: true,
-            savedOrders: [],
+            isGeneratingSpecificity: false, isSaving: false, activeTab: 'order-creation',
+            isSavedOrdersTabLocked: true, savedOrders: [],
             excelColumns: {
                 licencie: true, produit: true, specificite: true, options: true,
                 tailles: true, qte: true, prixUHT: true, prixUTTC: true,
                 totalHT: true, totalTTC: true, remise: true, geste: true
             },
-            
-            // Form State
-            orderId: null, 
-            isOrderValidated: false, 
-            isReassort: false,
-            isCustomDesignOrder: false,
-            isStoreOrder: false,
-            applyDiscount: false,
-            clubName: '',
-            departement: '',
-            clientNumber: '',
-            preOrderNumber: '',
-            quoteNumber: '',
-            orderDate: new Date().toISOString().split('T')[0],
-            licencieName: '',
-            clubDiscount: 0,
-            currentOrderLineItems: [],
-            discountType: 'global',
-            orderScope: 'global',
-            documentType: 'order',
-            orderSpecificity: '',
-            isImperatif: false,
-            imperatifNote: '',
-
-            // Item-specific State
-            currentProduct: '',
-            applyCommercialGesture: false,
-            currentQuantities: {},
-            currentCalculatedUnitPrice: 0,
-            manualUnitPrice: '',
-            currentSelectedOptions: [],
-            currentSpecificity: '',
-            currentAccessoryQuantity: '',
-            currentColor: '',
+            orderId: null, isOrderValidated: false, isReassort: false,
+            isCustomDesignOrder: false, isStoreOrder: false, applyDiscount: false,
+            clubName: '', departement: '', clientNumber: '', preOrderNumber: '',
+            quoteNumber: '', orderDate: new Date().toISOString().split('T')[0],
+            licencieName: '', clubDiscount: 0, currentOrderLineItems: [],
+            discountType: 'global', orderScope: 'global', documentType: 'order',
+            orderSpecificity: '', isImperatif: false, imperatifNote: '',
+            currentProduct: '', applyCommercialGesture: false, currentQuantities: {},
+            currentCalculatedUnitPrice: 0, manualUnitPrice: '', currentSelectedOptions: [],
+            currentSpecificity: '', currentAccessoryQuantity: '', currentColor: '',
         };
 
         // --- DOM Element References ---
         const dom = {
-            // Modals
             mainModal: document.getElementById('main-modal'),
             mainModalTitle: document.getElementById('main-modal-title'),
             mainModalBody: document.getElementById('main-modal-body'),
             mainModalActions: document.getElementById('main-modal-actions'),
             excelModal: document.getElementById('excel-modal'),
             excelColumnsContainer: document.getElementById('excel-columns-container'),
-            
-            // Order Info
             docTypeOrderRadio: document.getElementById('doc-type-order'),
             docTypeQuoteRadio: document.getElementById('doc-type-quote'),
             docTypeReassortCheck: document.getElementById('doc-type-reassort'),
@@ -574,12 +525,8 @@
             imperatifCheck: document.getElementById('imperatif-check'),
             imperatifNoteContainer: document.getElementById('imperatif-note-container'),
             imperatifNote: document.getElementById('imperatif-note'),
-            
-            // Product Form
             productTabsContainer: document.getElementById('product-tabs-container'),
             productFormContainer: document.getElementById('product-form-container'),
-            
-            // Main Tabs
             mainTabsContainer: document.getElementById('main-tabs-container'),
             orderCreationTabContent: document.getElementById('order-creation'),
             savedOrdersTabContent: document.getElementById('saved-orders'),
@@ -587,13 +534,9 @@
             importOrdersJsonBtn: document.getElementById('import-orders-json-btn'),
             exportOrdersJsonBtn: document.getElementById('export-orders-json-btn'),
             jsonOrdersFileInput: document.getElementById('json-orders-file-input'),
-
-            // Order Table
             orderTableBody: document.getElementById('order-table-body'),
             orderTableHead: document.getElementById('order-table-head'),
             totalArticlesDisplay: document.getElementById('total-articles-display'),
-
-            // Totals & Actions
             discountControlsContainer: document.getElementById('discount-controls-container'),
             discountGlobalRadio: document.getElementById('discount-global'),
             discountItemRadio: document.getElementById('discount-item'),
@@ -613,7 +556,6 @@
             downPaymentLabel: document.getElementById('down-payment-label'),
             downPayment: document.getElementById('down-payment'),
             newOrderBtn: document.getElementById('new-order-btn'),
-            customizeExportBtn: document.getElementById('customize-export-btn'),
             exportExcelBtn: document.getElementById('export-excel-btn'),
             exportPdfBtn: document.getElementById('export-pdf-btn'),
             sendEmailBtn: document.getElementById('send-email-btn'),
@@ -630,7 +572,6 @@
 
             if (clubName && clientNumber) {
                 let clientFound = false;
-                // Check for existing club and update its details
                 clientDatabase.forEach(client => {
                     if (client.clubName === clubName) {
                         client.clientNumber = clientNumber;
@@ -638,12 +579,9 @@
                         clientFound = true;
                     }
                 });
-
-                // If club is not found, add it as a new entry
                 if (!clientFound) {
                     clientDatabase.push({ clubName, clientNumber, departement });
                 }
-
                 localStorage.setItem('clientDatabase', JSON.stringify(clientDatabase));
                 updateDatalists();
             }
@@ -652,12 +590,8 @@
         const updateDatalists = () => {
             const clubList = document.getElementById('club-list');
             const clientList = document.getElementById('client-list');
-            if(clubList) {
-                clubList.innerHTML = clientDatabase.map(c => `<option value="${c.clubName}"></option>`).join('');
-            }
-            if(clientList){
-                clientList.innerHTML = clientDatabase.map(c => `<option value="${c.clientNumber}"></option>`).join('');
-            }
+            if(clubList) clubList.innerHTML = clientDatabase.map(c => `<option value="${c.clubName}"></option>`).join('');
+            if(clientList) clientList.innerHTML = clientDatabase.map(c => `<option value="${c.clientNumber}"></option>`).join('');
         };
 
 
@@ -682,9 +616,7 @@
                         break;
                     }
                 }
-                if (nextTierIndex !== -1) {
-                    return pricingTiers[nextTierIndex].price;
-                }
+                if (nextTierIndex !== -1) return pricingTiers[nextTierIndex].price;
             }
             return pricingTiers[currentTierIndex].price;
         };
@@ -693,13 +625,12 @@
             dom.mainModalTitle.textContent = title;
             dom.mainModalBody.innerHTML = '';
             dom.mainModalBody.appendChild(content);
-
             dom.mainModalActions.innerHTML = '';
             if (actions.length > 0) {
                  actions.forEach(action => {
                      const button = document.createElement('button');
                      button.textContent = action.label;
-                     button.className = `${action.className || 'bg-indigo-600 hover:bg-indigo-700 text-white'} font-bold py-2 px-4 rounded-lg transition duration-300 ease-in-out transform hover:scale-105`;
+                     button.className = `${action.className || 'bg-indigo-600 hover:bg-indigo-700 text-white'} font-bold py-2 px-4 rounded-lg`;
                      button.onclick = action.onClick;
                      dom.mainModalActions.appendChild(button);
                  });
@@ -722,12 +653,21 @@
              svg.setAttribute('class', 'animate-spin -ml-1 mr-3 h-5 w-5 text-white');
              svg.setAttribute('fill', 'none');
              svg.setAttribute('viewBox', '0 0 24 24');
-             svg.innerHTML = `
-                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                 <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-             `;
+             svg.innerHTML = `<circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>`;
              return svg;
         }
+
+        // --- CRM Integration via URL Parameters ---
+        const handleUrlParameters = () => {
+            const params = new URLSearchParams(window.location.search);
+            const clubName = params.get('nomClub');
+            const clientNumber = params.get('numClient');
+            const departement = params.get('departement');
+
+            if (clubName) state.clubName = decodeURIComponent(clubName.replace(/\+/g, ' '));
+            if (clientNumber) state.clientNumber = decodeURIComponent(clientNumber.replace(/\+/g, ' '));
+            if (departement) state.departement = decodeURIComponent(departement.replace(/\+/g, ' '));
+        };
 
         // --- RENDER FUNCTIONS ---
         const renderAll = () => {
@@ -739,7 +679,6 @@
         };
 
         const renderUIState = () => {
-            // Update input fields with state
             dom.clubName.value = state.clubName;
             dom.departement.value = state.departement;
             dom.clientNumber.value = state.clientNumber;
@@ -750,8 +689,6 @@
             dom.licencieName.value = state.licencieName;
             dom.clubDiscount.value = state.clubDiscount;
             dom.imperatifNote.value = state.imperatifNote;
-
-            // Update radio/checkboxes
             dom.docTypeOrderRadio.checked = state.documentType === 'order';
             dom.docTypeQuoteRadio.checked = state.documentType === 'quote';
             dom.docTypeReassortCheck.checked = state.isReassort;
@@ -763,8 +700,6 @@
             dom.scopeLicenseeRadio.checked = state.orderScope === 'licensee';
             dom.discountGlobalRadio.checked = state.discountType === 'global';
             dom.discountItemRadio.checked = state.discountType === 'item';
-
-            // Show/hide elements based on state
             dom.licencieNameContainer.classList.toggle('hidden', !(state.orderScope === 'licensee' && state.documentType === 'order'));
             dom.orderScopeContainer.classList.toggle('hidden', state.documentType !== 'order');
             dom.preOrderNumberContainer.classList.toggle('hidden', state.documentType !== 'order');
@@ -772,7 +707,6 @@
             dom.discountControlsContainer.classList.toggle('hidden', !state.applyDiscount);
             dom.imperatifNoteContainer.classList.toggle('hidden', !state.isImperatif);
             
-            // Update save button text
             const buttonText = state.orderId ? 'Mettre à jour la Commande' : 'Sauvegarder la Commande';
             dom.saveOrderBtn.disabled = state.isSaving;
             if (state.isSaving) {
@@ -783,7 +717,6 @@
                  dom.saveOrderBtn.textContent = buttonText;
             }
 
-            // MODIFIÉ: Les boutons d'export sont activés seulement si la commande est validée
             dom.exportPdfBtn.disabled = !state.isOrderValidated;
             dom.exportExcelBtn.disabled = !state.isOrderValidated;
             dom.sendEmailBtn.disabled = !state.isOrderValidated;
@@ -793,14 +726,9 @@
         
         const renderOrderTableHead = () => {
             let headers = '';
-            
-            if (state.orderScope === 'licensee' && state.documentType === 'order') {
-                // No extra header for licensee name, it's a row.
-            }
-             if (state.applyDiscount && state.discountType === 'item') {
+            if (state.applyDiscount && state.discountType === 'item') {
                   headers += `<th class="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Remise</th>`;
-             }
-            
+            }
             headers += `
                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Produit</th>
                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Qté</th>
@@ -818,10 +746,8 @@
                 dom.orderTableBody.innerHTML = `<tr><td colspan="9" class="px-6 py-12 text-center text-gray-500">Aucun article.</td></tr>`;
                 return;
             }
-
             let tableHtml = '';
             const sortedItems = sortLineItems(state.currentOrderLineItems);
-
             if (state.orderScope === 'licensee' && state.documentType === 'order') {
                 const groupedItems = sortedItems.reduce((acc, item) => {
                     const key = item.licencieName || 'Commande Globale';
@@ -829,14 +755,9 @@
                     acc[key].push(item);
                     return acc;
                 }, {});
-
                 for (const licensee in groupedItems) {
                     let licenseeSubtotal = 0;
-                    tableHtml += `
-                        <tr class="bg-indigo-50">
-                            <td colspan="8" class="px-6 py-2 text-left text-sm font-bold text-indigo-800">${licensee}</td>
-                        </tr>
-                    `;
+                    tableHtml += `<tr class="bg-indigo-50"><td colspan="8" class="px-6 py-2 text-left text-sm font-bold text-indigo-800">${licensee}</td></tr>`;
                     tableHtml += groupedItems[licensee].map(item => {
                          let itemTotal = item.totalPriceTTC;
                          if(state.applyDiscount && (state.discountType === 'global' || (state.discountType === 'item' && item.applyDiscount))){
@@ -845,18 +766,11 @@
                          licenseeSubtotal += itemTotal;
                         return renderSingleItemRow(item); 
                     }).join('');
-                     tableHtml += `
-                        <tr class="bg-indigo-100 font-bold">
-                            <td colspan="8" class="px-6 py-2 text-right text-sm text-indigo-800">Total à régler pour ${licensee}: ${licenseeSubtotal.toFixed(2)}€</td>
-                        </tr>
-                    `;
+                     tableHtml += `<tr class="bg-indigo-100 font-bold"><td colspan="8" class="px-6 py-2 text-right text-sm text-indigo-800">Total à régler pour ${licensee}: ${licenseeSubtotal.toFixed(2)}€</td></tr>`;
                 }
-
             } else {
                  tableHtml = sortedItems.map(item => renderSingleItemRow(item)).join('');
             }
-
-
             dom.orderTableBody.innerHTML = tableHtml;
         };
         
@@ -864,34 +778,19 @@
             const gestureIndicator = item.applyGesture ? `<span class="text-green-500 ml-1" title="Geste commercial appliqué">✳</span>` : '';
             const sortedSizeKeys = sortSizeKeys(Object.keys(item.quantitiesPerSize));
             const sizesText = sortedSizeKeys.map(size => `${size}: ${item.quantitiesPerSize[size]}`).join(', ');
-            
             const optionsText = item.options.length > 0 ? `<div class="text-xs text-blue-500">Options: ${item.options.join(', ')}</div>` : '';
             const specificityText = item.specificity ? `<div class="text-xs text-gray-600 italic mt-1">Note: ${item.specificity}</div>` : '';
-            
             let rowHtml = `<tr class="hover:bg-gray-50">`;
-            
             if (state.applyDiscount && state.discountType === 'item') {
                 rowHtml += `<td class="px-2 py-4 whitespace-nowrap"><input type="checkbox" class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" data-item-id="${item.id}" data-action="toggle-discount" ${item.applyDiscount ? 'checked' : ''}></td>`;
             }
-            
             let totalTTCDisplay = `${item.totalPriceTTC.toFixed(2)}€`;
             if (state.applyDiscount && ((state.discountType === 'global') || (state.discountType === 'item' && item.applyDiscount))) {
                 const discountedPrice = item.totalPriceTTC * (1 - (state.clubDiscount / 100));
-                totalTTCDisplay = `
-                    <div class="flex flex-col items-end">
-                        <span class="line-through text-gray-500 text-xs">${item.totalPriceTTC.toFixed(2)}€</span>
-                        <span class="text-red-600 font-bold">${discountedPrice.toFixed(2)}€</span>
-                    </div>
-                `;
+                totalTTCDisplay = `<div class="flex flex-col items-end"><span class="line-through text-gray-500 text-xs">${item.totalPriceTTC.toFixed(2)}€</span><span class="text-red-600 font-bold">${discountedPrice.toFixed(2)}€</span></div>`;
             }
-
             rowHtml += `
-                <td class="px-6 py-4 whitespace-nowrap">
-                    <div class="text-sm font-medium text-gray-900">${item.productName}${gestureIndicator}</div>
-                    <div class="text-xs text-gray-500">${sizesText}</div>
-                    ${optionsText}
-                    ${specificityText}
-                </td>
+                <td class="px-6 py-4 whitespace-nowrap"><div class="text-sm font-medium text-gray-900">${item.productName}${gestureIndicator}</div><div class="text-xs text-gray-500">${sizesText}</div>${optionsText}${specificityText}</td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${item.totalQuantity}</td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${item.unitPriceHT.toFixed(2)}€</td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${item.unitPriceTTC.toFixed(2)}€</td>
@@ -911,12 +810,10 @@
             dom.subtotalTTC.textContent = `${totals.subtotalTTC.toFixed(2)}€`;
             dom.discountAmountHT.textContent = `-${totals.discountAmountHT.toFixed(2)}€`;
             dom.discountAmountTTC.textContent = `-${totals.discountAmountTTC.toFixed(2)}€`;
-            
             dom.graphicDesignFeeHT.textContent = `${totals.appliedGraphicFeeHT.toFixed(2)}€`;
             dom.graphicDesignFeeTTC.textContent = `${totals.appliedGraphicFeeTTC.toFixed(2)}€`;
             dom.graphicFeeHtRow.classList.toggle('hidden', totals.appliedGraphicFeeTTC <= 0);
             dom.graphicFeeTtcRow.classList.toggle('hidden', totals.appliedGraphicFeeTTC <= 0);
-
             dom.shippingHT.textContent = `${totals.shippingHT.toFixed(2)}€`;
             dom.shippingTTC.textContent = `${totals.shippingTTC.toFixed(2)}€`;
             dom.grandTotalHT.textContent = `${totals.grandTotalHT.toFixed(2)}€`;
@@ -928,165 +825,54 @@
         
         const renderProductForm = () => {
             const productsToShow = allAvailableProducts.filter(p => {
-                if (p.category === 'option') return false; // Always exclude options from the main list
+                if (p.category === 'option') return false;
                 const activeProductTab = document.querySelector('.product-tab-btn.border-indigo-500')?.dataset.tab;
                 if (activeProductTab === 'CYCLISME/RUNNING') return p.category === 'CYCLISME' || p.category === 'RUNNING';
                 if (activeProductTab === 'Accessoires') return p.category === 'ACCESSOIRES';
                 if (activeProductTab === 'GAMME ENFANTS') return p.category === 'ENFANTS';
                 return false;
             });
-
             const grouped = productsToShow.reduce((acc, p) => {
                 const groupKey = `${p.category} - ${p.subtype}`;
                 acc[groupKey] = [...(acc[groupKey] || []), p];
                 return acc;
             }, {});
-
             const productSelectorOptions = Object.entries(grouped).map(([groupLabel, productList]) => 
-                `<optgroup label="${groupLabel}">
-                    ${productList.map(p => `<option value="${p.name}" ${state.currentProduct === p.name ? 'selected' : ''}>${p.name}</option>`).join('')}
-                </optgroup>`
+                `<optgroup label="${groupLabel}">${productList.map(p => `<option value="${p.name}" ${state.currentProduct === p.name ? 'selected' : ''}>${p.name}</option>`).join('')}</optgroup>`
             ).join('');
-
-            let formHtml = `
-                <div class="space-y-6">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700">Produit</label>
-                        <select id="current-product-select" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
-                            <option value="">-- Sélectionner un produit --</option>
-                            ${productSelectorOptions}
-                        </select>
-                    </div>
-            `;
-
+            let formHtml = `<div class="space-y-6"><div><label class="block text-sm font-medium text-gray-700">Produit</label><select id="current-product-select" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm"><option value="">-- Sélectionner un produit --</option>${productSelectorOptions}</select></div>`;
             const productData = allAvailableProducts.find(p => p.name === state.currentProduct);
             if(productData){
                 formHtml += `<div id="product-details-form" class="space-y-6">`;
                 const isQuote = state.documentType === 'quote';
                 const showSizeGrid = !isQuote && productData && (productData.type === 'haut' || productData.type === 'enfant' || (productData.type === 'accessoire' && productData.sizeType && productData.sizeType !== 'unique'));
                 const showSingleQuantityForOrder = !isQuote && (productData?.type === 'accessoire' && (!productData.sizeType || productData.sizeType === 'unique'));
-
-                if(isQuote){
-                    formHtml += `
-                     <div>
-                         <label for="quote-qty" class="block text-sm font-medium text-gray-700">Quantité</label>
-                         <input type="number" id="quote-qty" value="${state.currentAccessoryQuantity}" min="1" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm" placeholder="0">
-                    </div>`;
-                }
-                
+                if(isQuote) formHtml += `<div><label for="quote-qty" class="block text-sm font-medium text-gray-700">Quantité</label><input type="number" id="quote-qty" value="${state.currentAccessoryQuantity}" min="1" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm" placeholder="0"></div>`;
                 if(showSizeGrid){
                     const sizes = productSizes[productData.sizeType || productData.type] || [];
-                    const sizeInputs = sizes.map(size => `
-                        <div key="${size}">
-                            <label for="size-${size}" class="block text-sm font-medium text-gray-700">${size}</label>
-                            <input type="number" id="size-${size}" data-size="${size}" class="size-input mt-1 block w-full rounded-md border-gray-300 shadow-sm" placeholder="0" value="${state.currentQuantities[size] || ''}">
-                        </div>
-                    `).join('');
+                    const sizeInputs = sizes.map(size => `<div key="${size}"><label for="size-${size}" class="block text-sm font-medium text-gray-700">${size}</label><input type="number" id="size-${size}" data-size="${size}" class="size-input mt-1 block w-full rounded-md border-gray-300 shadow-sm" placeholder="0" value="${state.currentQuantities[size] || ''}"></div>`).join('');
                     formHtml += `<div class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3">${sizeInputs}</div>`;
                 }
-
-                if(showSingleQuantityForOrder){
-                    formHtml += `
-                        <div>
-                            <label for="accessory-qty" class="block text-sm font-medium text-gray-700">Quantité</label>
-                            <input type="number" id="accessory-qty" value="${state.currentAccessoryQuantity}" min="1" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
-                            ${productData.minQuantity && state.orderScope === 'global' ? `<p class="text-xs text-gray-500 mt-1">Quantité minimale : ${productData.minQuantity}</p>` : ''}
-                        </div>
-                    `;
-                }
-                
-               if (productData.colors) {
+                if(showSingleQuantityForOrder) formHtml += `<div><label for="accessory-qty" class="block text-sm font-medium text-gray-700">Quantité</label><input type="number" id="accessory-qty" value="${state.currentAccessoryQuantity}" min="1" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">${productData.minQuantity && state.orderScope === 'global' ? `<p class="text-xs text-gray-500 mt-1">Quantité minimale : ${productData.minQuantity}</p>` : ''}</div>`;
+                if (productData.colors) {
                     const colorOptions = productData.colors.map(c => `<option value="${c}" ${state.currentColor === c ? 'selected' : ''}>${c}</option>`).join('');
-                     formHtml += `
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700">Coloris</label>
-                            <select id="current-color-select" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
-                                <option value="">-- Sélectionner un coloris --</option>
-                                ${colorOptions}
-                            </select>
-                        </div>
-                    `;
-               }
-
+                    formHtml += `<div><label class="block text-sm font-medium text-gray-700">Coloris</label><select id="current-color-select" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm"><option value="">-- Sélectionner un coloris --</option>${colorOptions}</select></div>`;
+                }
                 formHtml += `<div class="flex justify-between items-center gap-4">`;
-                if(state.isReassort && productData.type !== 'accessoire'){
-                     formHtml += `
-                        <div class="flex-grow">
-                            <label for="manual-price" class="block text-sm font-medium text-gray-700">Prix U. TTC Manuel</label>
-                            <input type="number" id="manual-price" value="${state.manualUnitPrice}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm" placeholder="0.00">
-                        </div>
-                    `;
-                } else if(state.currentCalculatedUnitPrice > 0) {
-                     formHtml += `
-                        <div class="bg-indigo-50 p-4 rounded-lg flex-grow">
-                            <p class="text-indigo-800 font-semibold">Prix unitaire TTC : <span class="text-xl">${state.currentCalculatedUnitPrice.toFixed(2)}€</span></p>
-                        </div>
-                    `;
-                }
+                if(state.isReassort && productData.type !== 'accessoire') formHtml += `<div class="flex-grow"><label for="manual-price" class="block text-sm font-medium text-gray-700">Prix U. TTC Manuel</label><input type="number" id="manual-price" value="${state.manualUnitPrice}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm" placeholder="0.00"></div>`;
+                else if(state.currentCalculatedUnitPrice > 0) formHtml += `<div class="bg-indigo-50 p-4 rounded-lg flex-grow"><p class="text-indigo-800 font-semibold">Prix unitaire TTC : <span class="text-xl">${state.currentCalculatedUnitPrice.toFixed(2)}€</span></p></div>`;
                 formHtml += `<button id="add-product-btn" class="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-300">Ajouter Article</button></div>`;
-
-
-                if(productData.pricingTiers && productData.pricingTiers.length > 1 && !state.isReassort && state.documentType !== 'quote'){
-                    formHtml += `
-                        <div class="mt-4">
-                            <label class="flex items-center">
-                                <input type="checkbox" id="commercial-gesture-check" class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" ${state.applyCommercialGesture ? 'checked' : ''}>
-                                <span class="ml-2 text-sm text-gray-800">Geste commercial (passer au palier tarifaire suivant)</span>
-                            </label>
-                        </div>
-                    `;
-                }
-                
-                let normalOptions = [];
-                let lengthOptions = [];
-
+                if(productData.pricingTiers && productData.pricingTiers.length > 1 && !state.isReassort && state.documentType !== 'quote') formHtml += `<div class="mt-4"><label class="flex items-center"><input type="checkbox" id="commercial-gesture-check" class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" ${state.applyCommercialGesture ? 'checked' : ''}><span class="ml-2 text-sm text-gray-800">Geste commercial (passer au palier tarifaire suivant)</span></label></div>`;
+                let normalOptions = []; let lengthOptions = [];
                 const isLongSleeved = productData.type === 'haut' && (productData.name.includes('ML') || productData.name.includes('MANCHES LONGUES'));
-                
-                if (productData.isCuissardOrCollant || isLongSleeved) {
-                    lengthOptions = allAvailableProducts.filter(p => p.optionGroup === 'length');
-                }
-                
-                if (productData.hasOptions !== false && productData.type !== 'accessoire' && !productData.isCuissardOrCollant) {
-                    normalOptions = allAvailableProducts.filter(p =>
-                        p.category === 'option' && !p.optionGroup && !productData.excludedOptions?.includes(p.name)
-                    );
-                }
-
-                if (lengthOptions.length > 0) {
-                    const optionCheckboxes = lengthOptions.map(opt => `
-                        <div class="flex items-center">
-                           <input id="option-${opt.name}" type="checkbox" data-option-name="${opt.name}" data-option-group="length" class="option-checkbox h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" ${state.currentSelectedOptions.includes(opt.name) ? 'checked' : ''}>
-                           <label for="option-${opt.name}" class="ml-3 block text-sm text-gray-900">${opt.name.replace('Ajustement Longueur ', '')} (+${opt.fixedPriceTTC.toFixed(2)}€)</label>
-                        </div>
-                    `).join('');
-                    formHtml += `<div><label class="block text-sm font-medium text-gray-700 mb-2">Ajustement Longueur</label><div class="grid grid-cols-2 md:grid-cols-3 gap-x-4 gap-y-2">${optionCheckboxes}</div></div>`;
-                }
-
-                 if (normalOptions.length > 0) {
-                    const optionCheckboxes = normalOptions.map(opt => `
-                         <div class="flex items-center">
-                              <input id="option-${opt.name}" type="checkbox" data-option-name="${opt.name}" class="option-checkbox h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" ${state.currentSelectedOptions.includes(opt.name) ? 'checked' : ''}>
-                              <label for="option-${opt.name}" class="ml-3 block text-sm text-gray-900">${opt.name}</label>
-                         </div>
-                    `).join('');
-                    formHtml += `<div><label class="block text-sm font-medium text-gray-700 mb-2">Options</label><div class="space-y-2">${optionCheckboxes}</div></div>`;
-                 }
-                
-                formHtml += `
-                    <div>
-                        <label for="specificity" class="block text-sm font-medium text-gray-700">Spécificité / Notes</label>
-                        <textarea id="specificity" rows="3" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">${state.currentSpecificity}</textarea>
-                        ${ productData?.type !== 'accessoire' && !state.isReassort ? 
-                            `<button id="generate-specificity-btn" class="mt-2 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 disabled:bg-green-300" ${state.isGeneratingSpecificity ? 'disabled' : ''}>
-                                ✨ Générer avec IA
-                            </button>` : ''
-                        }
-                    </div>
-                `;
-                formHtml += `</div>`; // End of product-details-form
+                if (productData.isCuissardOrCollant || isLongSleeved) lengthOptions = allAvailableProducts.filter(p => p.optionGroup === 'length');
+                if (productData.hasOptions !== false && productData.type !== 'accessoire' && !productData.isCuissardOrCollant) normalOptions = allAvailableProducts.filter(p => p.category === 'option' && !p.optionGroup && !productData.excludedOptions?.includes(p.name));
+                if (lengthOptions.length > 0) formHtml += `<div><label class="block text-sm font-medium text-gray-700 mb-2">Ajustement Longueur</label><div class="grid grid-cols-2 md:grid-cols-3 gap-x-4 gap-y-2">${lengthOptions.map(opt => `<div class="flex items-center"><input id="option-${opt.name}" type="checkbox" data-option-name="${opt.name}" data-option-group="length" class="option-checkbox h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" ${state.currentSelectedOptions.includes(opt.name) ? 'checked' : ''}><label for="option-${opt.name}" class="ml-3 block text-sm text-gray-900">${opt.name.replace('Ajustement Longueur ', '')} (+${opt.fixedPriceTTC.toFixed(2)}€)</label></div>`).join('')}</div></div>`;
+                if (normalOptions.length > 0) formHtml += `<div><label class="block text-sm font-medium text-gray-700 mb-2">Options</label><div class="space-y-2">${normalOptions.map(opt => `<div class="flex items-center"><input id="option-${opt.name}" type="checkbox" data-option-name="${opt.name}" class="option-checkbox h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" ${state.currentSelectedOptions.includes(opt.name) ? 'checked' : ''}><label for="option-${opt.name}" class="ml-3 block text-sm text-gray-900">${opt.name}</label></div>`).join('')}</div></div>`;
+                formHtml += `<div><label for="specificity" class="block text-sm font-medium text-gray-700">Spécificité / Notes</label><textarea id="specificity" rows="3" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">${state.currentSpecificity}</textarea>${ productData?.type !== 'accessoire' && !state.isReassort ? `<button id="generate-specificity-btn" class="mt-2 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 disabled:bg-green-300" ${state.isGeneratingSpecificity ? 'disabled' : ''}>✨ Générer avec IA</button>` : ''}</div>`;
+                formHtml += `</div>`;
             }
-            formHtml += `</div>`; // End of space-y-6 wrapper
-
+            formHtml += `</div>`;
             dom.productFormContainer.innerHTML = formHtml;
         };
 
@@ -1094,89 +880,56 @@
             const listContainer = dom.savedOrdersList;
             if (!listContainer) return;
             listContainer.innerHTML = ''; 
-
             if (state.savedOrders.length === 0) {
                 listContainer.innerHTML = '<p class="text-gray-500">Aucune commande sauvegardée.</p>';
                 return;
             }
-
             const sortedOrders = [...state.savedOrders].sort((a, b) => new Date(b.savedAt) - new Date(a.savedAt));
-
             sortedOrders.forEach(order => {
                 const orderCard = document.createElement('div');
                 orderCard.className = 'p-4 border rounded-lg flex justify-between items-center bg-white shadow-sm';
-                orderCard.innerHTML = `
-                    <div>
-                        <p class="font-bold text-indigo-700">${order.clubName}</p>
-                        <p class="text-sm text-gray-600">N° Commande: ${order.preOrderNumber || order.quoteNumber || 'N/A'} - Date: ${order.orderDate}</p>
-                        <p class="text-xs text-gray-500">Sauvegardé le: ${new Date(order.savedAt).toLocaleString('fr-FR')}</p>
-                    </div>
-                    <div class="flex gap-2">
-                        <button data-action="load-order" data-order-id="${order.orderId}" class="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700">Charger</button>
-                        <button data-action="delete-order" data-order-id="${order.orderId}" class="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700">Supprimer</button>
-                    </div>
-                `;
+                orderCard.innerHTML = `<div><p class="font-bold text-indigo-700">${order.clubName}</p><p class="text-sm text-gray-600">N° Commande: ${order.preOrderNumber || order.quoteNumber || 'N/A'} - Date: ${order.orderDate}</p><p class="text-xs text-gray-500">Sauvegardé le: ${new Date(order.savedAt).toLocaleString('fr-FR')}</p></div><div class="flex gap-2"><button data-action="load-order" data-order-id="${order.orderId}" class="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700">Charger</button><button data-action="delete-order" data-order-id="${order.orderId}" class="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700">Supprimer</button></div>`;
                 listContainer.appendChild(orderCard);
             });
         };
 
 
         // --- CALCULATION LOGIC ---
-
         const calculateCurrentFormPrice = () => {
             const product = allAvailableProducts.find(p => p.name === state.currentProduct);
             if (!product || (state.isReassort && product.type !== 'accessoire')) {
                 state.currentCalculatedUnitPrice = 0;
                 return;
             }
-
             let currentFormQuantity = 0;
             if (state.documentType === 'quote') {
                  currentFormQuantity = parseInt(state.currentAccessoryQuantity, 10) || 0;
             } else {
                  if (product.type === 'accessoire') {
-                     if(product.sizeType && product.sizeType !== 'unique') {
-                         currentFormQuantity = Object.values(state.currentQuantities).reduce((sum, q) => sum + (parseInt(q, 10) || 0), 0);
-                     } else {
-                         currentFormQuantity = parseInt(state.currentAccessoryQuantity, 10) || 0;
-                     }
+                     if(product.sizeType && product.sizeType !== 'unique') currentFormQuantity = Object.values(state.currentQuantities).reduce((sum, q) => sum + (parseInt(q, 10) || 0), 0);
+                     else currentFormQuantity = parseInt(state.currentAccessoryQuantity, 10) || 0;
                  } else if (product.type === 'haut' || product.type === 'enfant') {
                     currentFormQuantity = Object.values(state.currentQuantities).reduce((sum, q) => sum + (parseInt(q, 10) || 0), 0);
                  }
             }
-        
             let groupQuantityInCart = 0;
             if (product.name === 'CHAUSSETTES AERO MIXTE 18cm') {
-                groupQuantityInCart = state.currentOrderLineItems
-                    .filter(li => li.productName === product.name && li.specificity === state.currentSpecificity)
-                    .reduce((sum, li) => sum + li.totalQuantity, 0);
+                groupQuantityInCart = state.currentOrderLineItems.filter(li => li.productName === product.name && li.specificity === state.currentSpecificity).reduce((sum, li) => sum + li.totalQuantity, 0);
             } else if (product.pricingGroup || (product.subtype === 'ACCESSOIRES PERSONNALISÉS' && product.pricingTiers)) {
-                groupQuantityInCart = state.currentOrderLineItems
-                    .filter(li => {
-                        const liProduct = allAvailableProducts.find(p => p.name === li.productName);
-                        const isSameGroup = product.pricingGroup ? (liProduct && liProduct.pricingGroup === product.pricingGroup) : (li.productName === product.name);
-                        return isSameGroup;
-                    })
-                    .reduce((sum, li) => sum + li.totalQuantity, 0);
+                groupQuantityInCart = state.currentOrderLineItems.filter(li => {
+                    const liProduct = allAvailableProducts.find(p => p.name === li.productName);
+                    return product.pricingGroup ? (liProduct && liProduct.pricingGroup === product.pricingGroup) : (li.productName === product.name);
+                }).reduce((sum, li) => sum + li.totalQuantity, 0);
             }
-        
             const totalPricingQuantity = currentFormQuantity + groupQuantityInCart;
-        
             const basePrice = product.price ? product.price : getPriceForQuantity(product.pricingTiers, totalPricingQuantity, state.applyCommercialGesture);
-        
             const optionsPrice = state.currentSelectedOptions.reduce((total, optionName) => {
                 const optionProduct = allAvailableProducts.find(p => p.name === optionName);
                 if (!optionProduct) return total;
-            
-                if (optionProduct.fixedPriceTTC) {
-                    return total + optionProduct.fixedPriceTTC;
-                }
-                if (optionProduct.pricingTiers) {
-                    return total + getPriceForQuantity(optionProduct.pricingTiers, totalPricingQuantity, state.applyCommercialGesture);
-                }
+                if (optionProduct.fixedPriceTTC) return total + optionProduct.fixedPriceTTC;
+                if (optionProduct.pricingTiers) return total + getPriceForQuantity(optionProduct.pricingTiers, totalPricingQuantity, item.applyGesture);
                 return total;
             }, 0);
-        
             state.currentCalculatedUnitPrice = basePrice + optionsPrice;
         };
 
@@ -1184,29 +937,21 @@
             const updatedLineItems = state.currentOrderLineItems.map(item => {
                 const product = allAvailableProducts.find(p => p.name === item.productName);
                 if (!product) return item;
-
                 let pricingQuantity = item.totalQuantity;
-                
                 let baseUnitPriceTTC;
                 if (item.isManualPrice) {
                     baseUnitPriceTTC = item.initialManualPrice;
                 } else {
                     if (product.name === 'CHAUSSETTES AERO MIXTE 18cm') {
-                        pricingQuantity = state.currentOrderLineItems
-                            .filter(li => li.productName === product.name && li.specificity === item.specificity)
-                            .reduce((sum, li) => sum + li.totalQuantity, 0);
+                        pricingQuantity = state.currentOrderLineItems.filter(li => li.productName === product.name && li.specificity === item.specificity).reduce((sum, li) => sum + li.totalQuantity, 0);
                     } else if (product.pricingGroup || (product.subtype === 'ACCESSOIRES PERSONNALISÉS' && product.pricingTiers)) {
-                        pricingQuantity = state.currentOrderLineItems
-                        .filter(li => {
+                        pricingQuantity = state.currentOrderLineItems.filter(li => {
                             const liProduct = allAvailableProducts.find(p => p.name === li.productName);
-                            const isSameGroup = product.pricingGroup ? (liProduct && liProduct.pricingGroup === product.pricingGroup) : (li.productName === item.productName);
-                            return isSameGroup;
-                        })
-                        .reduce((sum, li) => sum + li.totalQuantity, 0);
+                            return product.pricingGroup ? (liProduct && liProduct.pricingGroup === product.pricingGroup) : (li.productName === item.productName);
+                        }).reduce((sum, li) => sum + li.totalQuantity, 0);
                     }
                    baseUnitPriceTTC = product.price ? product.price : getPriceForQuantity(product.pricingTiers, pricingQuantity, item.applyGesture);
                 }
-                
                 const totalOptionsPriceTTC = item.options.reduce((total, optionName) => {
                     const optionProduct = allAvailableProducts.find(p => p.name === optionName);
                     if (!optionProduct) return total;
@@ -1214,45 +959,30 @@
                     if (optionProduct.pricingTiers) return total + getPriceForQuantity(optionProduct.pricingTiers, pricingQuantity, item.applyGesture);
                     return total;
                 }, 0);
-
                 const finalUnitPriceTTC = baseUnitPriceTTC + totalOptionsPriceTTC;
                 const totalPriceTTC = finalUnitPriceTTC * item.totalQuantity;
                 const finalUnitPriceHT = finalUnitPriceTTC / (1 + TVA_RATE);
                 const totalPriceHT = totalPriceTTC / (1 + TVA_RATE);
-
                 return { ...item, unitPriceTTC: finalUnitPriceTTC, unitPriceHT: finalUnitPriceHT, totalPriceTTC, totalPriceHT };
             });
-
             state.currentOrderLineItems = updatedLineItems;
-
             const originalSubtotalHT = updatedLineItems.reduce((acc, item) => acc + item.totalPriceHT, 0);
             const originalSubtotalTTC = updatedLineItems.reduce((acc, item) => acc + item.totalPriceTTC, 0);
-
             let discountBaseHT = 0;
-            if (state.applyDiscount && state.discountType === 'global') {
-                discountBaseHT = originalSubtotalHT;
-            } else if (state.applyDiscount && state.discountType === 'item') {
-                discountBaseHT = updatedLineItems
-                    .filter(item => item.applyDiscount)
-                    .reduce((acc, item) => acc + item.totalPriceHT, 0);
-            }
+            if (state.applyDiscount && state.discountType === 'global') discountBaseHT = originalSubtotalHT;
+            else if (state.applyDiscount && state.discountType === 'item') discountBaseHT = updatedLineItems.filter(item => item.applyDiscount).reduce((acc, item) => acc + item.totalPriceHT, 0);
             const discountAmountHT = discountBaseHT * (state.clubDiscount / 100);
             const discountAmountTTC = discountAmountHT * (1 + TVA_RATE);
-
             let shippingHT = 0;
             if (originalSubtotalHT > 2000) shippingHT = 0;
             else if (originalSubtotalHT > 1000) shippingHT = 14;
             else if (originalSubtotalHT > 500) shippingHT = 12;
             else if (originalSubtotalHT > 0) shippingHT = 9.50;
-            
             const shippingTTC = shippingHT * (1 + TVA_RATE);
-            
             const appliedGraphicFeeTTC = state.isCustomDesignOrder ? GRAPHIC_FEE_TTC : 0;
             const appliedGraphicFeeHT = appliedGraphicFeeTTC / (1 + TVA_RATE);
-
             const grandTotalHT = originalSubtotalHT + shippingHT + appliedGraphicFeeHT;
             const grandTotalTTC = originalSubtotalTTC + shippingTTC + appliedGraphicFeeTTC;
-            
             let downPayment = 0;
             let downPaymentLabel = 'Acompte à verser (30%):';
             if (state.isCustomDesignOrder) {
@@ -1261,7 +991,6 @@
             } else {
                 downPayment = grandTotalTTC * DOWN_PAYMENT_RATE;
             }
-            
             return {
                 subtotalHT: originalSubtotalHT, subtotalTTC: originalSubtotalTTC,
                 discountAmountHT, discountAmountTTC, shippingHT, shippingTTC,
@@ -1272,32 +1001,22 @@
 
 
         // --- EVENT HANDLERS & LOGIC ---
-        
         const resetProductFormFields = () => {
-            state.applyCommercialGesture = false;
-            state.currentQuantities = {};
-            state.currentCalculatedUnitPrice = 0;
-            state.manualUnitPrice = '';
-            state.currentSelectedOptions = [];
-            state.currentSpecificity = '';
-            state.currentAccessoryQuantity = '';
-            state.currentColor = '';
+            state.applyCommercialGesture = false; state.currentQuantities = {};
+            state.currentCalculatedUnitPrice = 0; state.manualUnitPrice = '';
+            state.currentSelectedOptions = []; state.currentSpecificity = '';
+            state.currentAccessoryQuantity = ''; state.currentColor = '';
         };
 
         const handleProductAdd = () => {
-             const product = allAvailableProducts.find(p => p.name === state.currentProduct);
+            const product = allAvailableProducts.find(p => p.name === state.currentProduct);
             if (!product) return;
-
             if (state.orderScope === 'licensee' && state.documentType === 'order' && !state.licencieName) {
                 const p = document.createElement('p');
                 p.textContent = `Veuillez saisir un nom de licencié avant d'ajouter un article.`;
-                showModal(dom.mainModal, 'Erreur de validation', p);
-                return;
+                showModal(dom.mainModal, 'Erreur de validation', p); return;
             }
-
-            let totalQuantity = 0;
-            let quantitiesPerSize = {};
-        
+            let totalQuantity = 0; let quantitiesPerSize = {};
             if(state.documentType === 'quote') {
                 totalQuantity = parseInt(state.currentAccessoryQuantity, 10) || 0;
                 quantitiesPerSize = { 'Total': totalQuantity };
@@ -1315,177 +1034,117 @@
                     quantitiesPerSize = { ...state.currentQuantities };
                 }
             }
-
-
             if (totalQuantity === 0) {
-                 const p = document.createElement('p');
-                 p.textContent = `Veuillez entrer une quantité valide.`;
-                 showModal(dom.mainModal, 'Erreur', p);
-                return;
+                 const p = document.createElement('p'); p.textContent = `Veuillez entrer une quantité valide.`;
+                 showModal(dom.mainModal, 'Erreur', p); return;
             }
-
             const isManualPriceItem = state.isReassort && product.type !== 'accessoire';
             if (isManualPriceItem && (!state.manualUnitPrice || parseFloat(state.manualUnitPrice) <= 0)) {
-                const p = document.createElement('p');
-                p.textContent = `Veuillez saisir un prix manuel valide pour le réassort.`;
-                showModal(dom.mainModal, 'Erreur de Prix', p);
-                return;
+                const p = document.createElement('p'); p.textContent = `Veuillez saisir un prix manuel valide pour le réassort.`;
+                showModal(dom.mainModal, 'Erreur de Prix', p); return;
             }
-        
             if(state.orderScope === 'global' && state.documentType === 'order' && product.subtype === 'ACCESSOIRES PERSONNALISÉS' && totalQuantity < product.minQuantity){
-                const p = document.createElement('p');
-                p.textContent = `La quantité minimale pour cet accessoire est de ${product.minQuantity}.`;
-                showModal(dom.mainModal, 'Erreur', p);
-                return;
+                const p = document.createElement('p'); p.textContent = `La quantité minimale pour cet accessoire est de ${product.minQuantity}.`;
+                showModal(dom.mainModal, 'Erreur', p); return;
             }
-
             const newLineItem = {
                 id: Date.now(), productName: product.name, type: product.type,
-                quantitiesPerSize, totalQuantity, 
-                unitPriceTTC: 0, unitPriceHT: 0, totalPriceTTC: 0, totalPriceHT: 0,
-                options: state.currentSelectedOptions, specificity: state.currentSpecificity,
-                applyDiscount: true,
+                quantitiesPerSize, totalQuantity, unitPriceTTC: 0, unitPriceHT: 0, totalPriceTTC: 0, totalPriceHT: 0,
+                options: state.currentSelectedOptions, specificity: state.currentSpecificity, applyDiscount: true,
                 applyGesture: !state.isReassort && state.orderScope === 'global' && state.documentType === 'order' ? state.applyCommercialGesture : false,
                 licencieName: (state.documentType === 'order' && state.orderScope === 'licensee') ? state.licencieName : 'Commande Globale',
-                color: state.currentColor,
-                isManualPrice: isManualPriceItem,
+                color: state.currentColor, isManualPrice: isManualPriceItem,
                 initialManualPrice: isManualPriceItem ? parseFloat(state.manualUnitPrice) : 0,
             };
-        
             state.currentOrderLineItems.push(newLineItem);
-            state.isOrderValidated = false;
-            state.currentProduct = '';
-            resetProductFormFields();
-            renderAll();
+            state.isOrderValidated = false; state.currentProduct = '';
+            resetProductFormFields(); renderAll();
         };
         
         const resetForm = () => {
             Object.assign(state, {
-                isGeneratingSpecificity: false, isSaving: false,
-                isReassort: false, isCustomDesignOrder: false, isStoreOrder: false, applyDiscount: false, clubName: '',
-                departement: '', clientNumber: '', preOrderNumber: '', quoteNumber: '',
-                orderDate: new Date().toISOString().split('T')[0], licencieName: '',
-                clubDiscount: 0, currentOrderLineItems: [], discountType: 'global',
-                orderScope: 'global', documentType: 'order', orderSpecificity: '',
-                isImperatif: false, imperatifNote: '',
-                orderId: null,
-                isOrderValidated: false
+                isGeneratingSpecificity: false, isSaving: false, isReassort: false, isCustomDesignOrder: false, 
+                isStoreOrder: false, applyDiscount: false, clubName: '', departement: '', clientNumber: '', 
+                preOrderNumber: '', quoteNumber: '', orderDate: new Date().toISOString().split('T')[0], 
+                licencieName: '', clubDiscount: 0, currentOrderLineItems: [], discountType: 'global',
+                orderScope: 'global', documentType: 'order', orderSpecificity: '', isImperatif: false, 
+                imperatifNote: '', orderId: null, isOrderValidated: false
             });
             state.currentProduct = '';
             resetProductFormFields();
+            handleUrlParameters(); // Re-apply URL params after reset
             renderAll();
         };
 
         const handleNewOrder = () => {
-            const p = document.createElement('p');
-            p.textContent = `Êtes-vous sûr de vouloir commencer une nouvelle commande ? Toutes les modifications non sauvegardées seront perdues.`;
+            const p = document.createElement('p'); p.textContent = `Êtes-vous sûr de vouloir commencer une nouvelle commande ? Toutes les modifications non sauvegardées seront perdues.`;
             const actions = [
                 { label: 'Annuler', onClick: () => hideModal(dom.mainModal), className: 'bg-gray-300 hover:bg-gray-400 text-gray-800' },
-                { label: 'Commencer une nouvelle commande', onClick: () => {
-                    resetForm();
-                    hideModal(dom.mainModal);
-                }, className: 'bg-red-600 hover:bg-red-700 text-white' }
+                { label: 'Commencer une nouvelle commande', onClick: () => { resetForm(); hideModal(dom.mainModal); }, className: 'bg-red-600 hover:bg-red-700 text-white' }
             ];
             showModal(dom.mainModal, 'Confirmation', p, actions);
         };
 
         const promptForForceCode = (callbackOnSuccess) => {
             hideModal(dom.mainModal); 
-
-            const container = document.createElement('div');
-            container.className = 'space-y-4';
-            const p = document.createElement('p');
-            p.textContent = 'Pour forcer cette action, veuillez saisir le code d\'autorisation.';
-            const input = document.createElement('input');
-            input.type = 'password';
-            input.id = 'force-code-input';
-            input.className = 'mt-1 block w-full rounded-md border-gray-300 shadow-sm';
-            const errorMsg = document.createElement('p');
-            errorMsg.id = 'force-code-error';
-            errorMsg.className = 'text-red-500 text-sm hidden';
-            errorMsg.textContent = 'Code incorrect.';
-            container.appendChild(p);
-            container.appendChild(input);
-            container.appendChild(errorMsg);
-
+            const container = document.createElement('div'); container.className = 'space-y-4';
+            const p = document.createElement('p'); p.textContent = 'Pour forcer cette action, veuillez saisir le code d\'autorisation.';
+            const input = document.createElement('input'); input.type = 'password'; input.id = 'force-code-input'; input.className = 'mt-1 block w-full rounded-md border-gray-300 shadow-sm';
+            const errorMsg = document.createElement('p'); errorMsg.id = 'force-code-error'; errorMsg.className = 'text-red-500 text-sm hidden'; errorMsg.textContent = 'Code incorrect.';
+            container.appendChild(p); container.appendChild(input); container.appendChild(errorMsg);
             const actions = [
                 { label: 'Annuler', onClick: () => hideModal(dom.mainModal), className: 'bg-gray-300' },
-                { 
-                    label: 'Confirmer', 
-                    onClick: () => {
-                        const enteredCode = document.getElementById('force-code-input').value;
-                        if (enteredCode === '582069') {
-                            hideModal(dom.mainModal);
-                            callbackOnSuccess();
-                        } else {
-                            document.getElementById('force-code-error').classList.remove('hidden');
-                            document.getElementById('force-code-input').classList.add('border-red-500');
-                            input.focus();
-                        }
-                    }, 
-                    className: 'bg-green-600 hover:bg-green-700' 
-                }
+                { label: 'Confirmer', onClick: () => {
+                    if (document.getElementById('force-code-input').value === '582069') {
+                        hideModal(dom.mainModal); callbackOnSuccess();
+                    } else {
+                        document.getElementById('force-code-error').classList.remove('hidden');
+                        document.getElementById('force-code-input').classList.add('border-red-500'); input.focus();
+                    }
+                }, className: 'bg-green-600 hover:bg-green-700' }
             ];
             showModal(dom.mainModal, 'Code d\'Autorisation Requis', container, actions);
         };
         
         const handleSaveOrderClick = () => {
             if (!state.clubName || !state.departement || !state.clientNumber) {
-                const p = document.createElement('p');
-                p.textContent = 'Le nom du club, le département et le N° client sont obligatoires.';
-                showModal(dom.mainModal, 'Erreur de validation', p);
-                return;
+                const p = document.createElement('p'); p.textContent = 'Le nom du club, le département et le N° client sont obligatoires.';
+                showModal(dom.mainModal, 'Erreur de validation', p); return;
             }
             if (state.currentOrderLineItems.length === 0) {
-                const p = document.createElement('p');
-                p.textContent = 'Impossible de sauvegarder un document vide.';
-                showModal(dom.mainModal, 'Erreur de validation', p);
-                return;
+                const p = document.createElement('p'); p.textContent = 'Impossible de sauvegarder un document vide.';
+                showModal(dom.mainModal, 'Erreur de validation', p); return;
             }
-        
             if (state.isReassort) {
                  const nonAccessoryItems = state.currentOrderLineItems.filter(item => {
                      const product = allAvailableProducts.find(p => p.name === item.productName);
                      return product && product.type !== 'accessoire';
                  });
                  const totalNonAccessoryQuantity = nonAccessoryItems.reduce((sum, item) => sum + item.totalQuantity, 0);
-                 
                  if (totalNonAccessoryQuantity < 10) {
-                     const p = document.createElement('p');
-                     p.innerHTML = `<b>Validation Réassort :</b> La commande doit contenir un minimum de 10 articles (hors accessoires).<br>Quantité actuelle : <b>${totalNonAccessoryQuantity}</b>.`;
+                     const p = document.createElement('p'); p.innerHTML = `<b>Validation Réassort :</b> La commande doit contenir un minimum de 10 articles (hors accessoires).<br>Quantité actuelle : <b>${totalNonAccessoryQuantity}</b>.`;
                      showModal(dom.mainModal, 'Validation Impossible (Réassort)', p, [
                          { label: 'Fermer', onClick: () => hideModal(dom.mainModal), className: 'bg-gray-300' },
                          { label: 'Forcer la sauvegarde', onClick: () => promptForForceCode(() => saveOrder()), className: 'bg-orange-500 hover:bg-orange-600' }
-                     ]);
-                     return;
+                     ]); return;
                  }
-
                  const itemsWithLessThanTwo = nonAccessoryItems.filter(item => item.totalQuantity < 2);
                  if (itemsWithLessThanTwo.length > 0) {
                     const p = document.createElement('p');
-                    const itemNames = itemsWithLessThanTwo.map(item => `<li>${item.productName} (Qté: ${item.totalQuantity})</li>`).join('');
-                    p.innerHTML = `
-                        <b>Validation Réassort :</b> Chaque article d'une commande de réassort doit avoir une quantité minimale de 2.
-                        <br><br>Les articles suivants ne respectent pas cette règle :
-                        <ul class="list-disc list-inside mt-2">${itemNames}</ul>
-                    `;
+                    p.innerHTML = `<b>Validation Réassort :</b> Chaque article d'une commande de réassort doit avoir une quantité minimale de 2.<br><br>Les articles suivants ne respectent pas cette règle :<ul class="list-disc list-inside mt-2">${itemsWithLessThanTwo.map(item => `<li>${item.productName} (Qté: ${item.totalQuantity})</li>`).join('')}</ul>`;
                     showModal(dom.mainModal, 'Validation Impossible (Réassort)', p, [
                         { label: 'Fermer', onClick: () => hideModal(dom.mainModal), className: 'bg-gray-300' },
                         { label: 'Forcer la sauvegarde', onClick: () => promptForForceCode(() => saveOrder()), className: 'bg-orange-500 hover:bg-orange-600' }
-                    ]);
-                    return;
+                    ]); return;
                 }
-
             } else if (state.documentType === 'order') {
                  const totalQuantity = state.currentOrderLineItems.reduce((sum, item) => sum + item.totalQuantity, 0);
-                 if (totalQuantity < 10 && !state.isCustomDesignOrder) { // Don't check min quantity for custom design orders as they have a fee
-                      const p = document.createElement('p');
-                     p.innerHTML = `<b>Validation Commande :</b> La commande doit contenir un minimum de 10 articles au total.<br>Quantité actuelle : <b>${totalQuantity}</b>.`;
-                     showModal(dom.mainModal, 'Validation Impossible', p, [
+                 if (totalQuantity < 10 && !state.isCustomDesignOrder) {
+                      const p = document.createElement('p'); p.innerHTML = `<b>Validation Commande :</b> La commande doit contenir un minimum de 10 articles au total.<br>Quantité actuelle : <b>${totalQuantity}</b>.`;
+                      showModal(dom.mainModal, 'Validation Impossible', p, [
                          { label: 'Annuler', onClick: () => hideModal(dom.mainModal), className: 'bg-gray-300' },
                          { label: 'Forcer la sauvegarde', onClick: () => promptForForceCode(() => saveOrder()), className: 'bg-orange-500 hover:bg-orange-600' }
-                     ]);
-                     return;
+                      ]); return;
                  }
             }
             saveOrder();
@@ -1494,273 +1153,139 @@
         const createOrderSnapshot = () => {
             const orderData = {};
             const orderKeys = [
-                'orderId', 'isReassort', 'isCustomDesignOrder', 'isStoreOrder', 'applyDiscount', 'clubName', 
-                'departement', 'clientNumber', 'preOrderNumber', 'quoteNumber', 'orderDate', 
-                'licencieName', 'clubDiscount', 'currentOrderLineItems', 'discountType', 
-                'orderScope', 'documentType', 'orderSpecificity', 'isImperatif', 'imperatifNote'
+                'orderId', 'isReassort', 'isCustomDesignOrder', 'isStoreOrder', 'applyDiscount', 'clubName', 'departement', 
+                'clientNumber', 'preOrderNumber', 'quoteNumber', 'orderDate', 'licencieName', 'clubDiscount', 
+                'currentOrderLineItems', 'discountType', 'orderScope', 'documentType', 'orderSpecificity', 
+                'isImperatif', 'imperatifNote'
             ];
             orderKeys.forEach(key => { orderData[key] = state[key]; });
             return orderData;
         };
         
         const saveOrder = () => {
-            state.isSaving = true;
-            renderAll();
+            state.isSaving = true; renderAll();
             const orderSnapshot = createOrderSnapshot();
-            
             setTimeout(() => {
                 if (state.orderId) {
                     const index = state.savedOrders.findIndex(o => o.orderId === state.orderId);
-                    if (index !== -1) {
-                        state.savedOrders[index] = { ...orderSnapshot, savedAt: new Date().toISOString() };
-                    } else { 
-                        const newOrderId = Date.now();
-                        orderSnapshot.orderId = newOrderId;
-                        state.orderId = newOrderId;
-                        state.savedOrders.push({ ...orderSnapshot, savedAt: new Date().toISOString() });
+                    if (index !== -1) state.savedOrders[index] = { ...orderSnapshot, savedAt: new Date().toISOString() };
+                    else { 
+                        const newOrderId = Date.now(); orderSnapshot.orderId = newOrderId;
+                        state.orderId = newOrderId; state.savedOrders.push({ ...orderSnapshot, savedAt: new Date().toISOString() });
                     }
                 } else {
-                    const newOrderId = Date.now();
-                    orderSnapshot.orderId = newOrderId;
-                    state.orderId = newOrderId;
-                    state.savedOrders.push({ ...orderSnapshot, savedAt: new Date().toISOString() });
+                    const newOrderId = Date.now(); orderSnapshot.orderId = newOrderId;
+                    state.orderId = newOrderId; state.savedOrders.push({ ...orderSnapshot, savedAt: new Date().toISOString() });
                 }
                 localStorage.setItem('savedOrdersDB', JSON.stringify(state.savedOrders));
-                state.isSaving = false;
-                state.isOrderValidated = true; // MODIFIÉ: Valider la commande après sauvegarde réussie
-                const p = document.createElement('p');
-                p.textContent = "La commande a été sauvegardée et validée avec succès. Les exports sont maintenant disponibles.";
-                showModal(dom.mainModal, 'Succès', p);
-                renderAll();
+                state.isSaving = false; state.isOrderValidated = true;
+                const p = document.createElement('p'); p.textContent = "La commande a été sauvegardée et validée avec succès. Les exports sont maintenant disponibles.";
+                showModal(dom.mainModal, 'Succès', p); renderAll();
             }, 500);
         };
 
         // --- PDF EXPORT ---
         const handleExportPdf = () => {
             if (!state.isOrderValidated) {
-                 const p = document.createElement('p');
-                 p.textContent = "Veuillez d'abord valider la commande en cliquant sur 'Sauvegarder la Commande' avant de l'exporter.";
-                 showModal(dom.mainModal, 'Exportation impossible', p);
-                 return;
+                 const p = document.createElement('p'); p.textContent = "Veuillez d'abord valider la commande en cliquant sur 'Sauvegarder la Commande' avant de l'exporter.";
+                 showModal(dom.mainModal, 'Exportation impossible', p); return;
             }
-
             const { jsPDF } = window.jspdf;
-            const doc = new jsPDF();
-            const totals = calculateAllTotals();
-            let finalY = 0;
-
-            // --- HEADER ---
+            const doc = new jsPDF(); const totals = calculateAllTotals(); let finalY = 0;
             doc.setFontSize(18);
             const docTitle = `${state.documentType === 'quote' ? 'Devis' : 'Bon de commande'} ${state.isReassort ? '(Réassort 2 mois)' : ''}`;
             doc.text(docTitle, 14, 22);
-
-            doc.setFontSize(11);
-            doc.setTextColor(100);
-
+            doc.setFontSize(11); doc.setTextColor(100);
             doc.text(`Nom du Club: ${state.clubName}`, 14, 32);
             doc.text(`Département: ${state.departement}`, 14, 38);
             doc.text(`N° Client: ${state.clientNumber}`, 14, 44);
-            
             const orderRefLabel = state.documentType === 'quote' ? 'N° Devis:' : 'N° Pré-commande:';
             const orderRefValue = state.documentType === 'quote' ? state.quoteNumber : state.preOrderNumber;
             doc.text(`${orderRefLabel} ${orderRefValue}`, 140, 32);
             doc.text(`Date: ${state.orderDate}`, 140, 38);
-            if (state.documentType === 'quote') {
-                doc.text("Validité de l'offre: 1 mois", 140, 44);
-            }
-
+            if (state.documentType === 'quote') doc.text("Validité de l'offre: 1 mois", 140, 44);
             finalY = 50; 
-
-            // --- IMPERATIF NOTE ---
             if (state.isImperatif && state.imperatifNote) {
-                doc.setFillColor(255, 26, 26); // Red background
-                doc.setTextColor(255, 255, 255); // White text
-                doc.setFont(undefined, 'bold');
-                
+                doc.setFillColor(255, 26, 26); doc.setTextColor(255, 255, 255); doc.setFont(undefined, 'bold');
                 const noteLines = doc.splitTextToSize(`IMPÉRATIF : ${state.imperatifNote}`, 180);
-                const noteHeight = (noteLines.length * 5) + 8; // Calculate height needed
-                
-                doc.rect(14, finalY, 182, noteHeight, 'F');
-                doc.text(noteLines, 16, finalY + 6);
-                
-                finalY += noteHeight + 5; // Add some padding below
-                
-                // Reset colors and font style
-                doc.setTextColor(0);
-                doc.setFont(undefined, 'normal');
+                const noteHeight = (noteLines.length * 5) + 8;
+                doc.rect(14, finalY, 182, noteHeight, 'F'); doc.text(noteLines, 16, finalY + 6);
+                finalY += noteHeight + 5;
+                doc.setTextColor(0); doc.setFont(undefined, 'normal');
             }
-
-            // --- ITEMS TABLE ---
             const head = [['Produit', 'Tailles', 'Qté', 'Prix U. HT', 'Prix U. TTC', 'Total HT', 'Total TTC']];
-            const sortedItems = sortLineItems(state.currentOrderLineItems);
-            
-            const body = sortedItems.map(item => {
+            const body = sortLineItems(state.currentOrderLineItems).map(item => {
                 let productName = item.productName;
                 if (item.options.length > 0) productName += `\nOptions: ${item.options.join(', ')}`;
                 if (item.specificity) productName += `\nNote: ${item.specificity}`;
-
-                const sortedSizeKeys = sortSizeKeys(Object.keys(item.quantitiesPerSize));
-                const sizesText = sortedSizeKeys.map(size => `${size}: ${item.quantitiesPerSize[size]}`).join('\n');
-
-                return [
-                    productName, sizesText, item.totalQuantity,
-                    `${item.unitPriceHT.toFixed(2)} €`, `${item.unitPriceTTC.toFixed(2)} €`,
-                    `${item.totalPriceHT.toFixed(2)} €`, `${item.totalPriceTTC.toFixed(2)} €`
-                ];
+                const sizesText = sortSizeKeys(Object.keys(item.quantitiesPerSize)).map(size => `${size}: ${item.quantitiesPerSize[size]}`).join('\n');
+                return [ productName, sizesText, item.totalQuantity, `${item.unitPriceHT.toFixed(2)} €`, `${item.unitPriceTTC.toFixed(2)} €`, `${item.totalPriceHT.toFixed(2)} €`, `${item.totalPriceTTC.toFixed(2)} €`];
             });
-
-            doc.autoTable({
-                startY: finalY, head: head, body: body, theme: 'striped',
-                headStyles: { fillColor: [41, 128, 185], textColor: 255 },
-                styles: { cellPadding: 2, fontSize: 8 },
-                didDrawPage: (data) => { finalY = data.cursor.y; }
-            });
-
-            // --- TOTALS ---
-            const totalsLabelX = 120;
-            const totalsValueX = 200;
-            let totalsY = finalY + 10;
-
-            const neededHeight = 70;
-            if (totalsY + neededHeight > doc.internal.pageSize.height) {
-                doc.addPage();
-                totalsY = 20;
-            }
-            
+            doc.autoTable({ startY: finalY, head: head, body: body, theme: 'striped', headStyles: { fillColor: [41, 128, 185], textColor: 255 }, styles: { cellPadding: 2, fontSize: 8 }, didDrawPage: (data) => { finalY = data.cursor.y; } });
+            const totalsLabelX = 120; const totalsValueX = 200; let totalsY = finalY + 10;
+            if (totalsY + 70 > doc.internal.pageSize.height) { doc.addPage(); totalsY = 20; }
             doc.setFontSize(10);
-            doc.text(`Sous-total HT:`, totalsLabelX, totalsY);
-            doc.text(`${totals.subtotalHT.toFixed(2)} €`, totalsValueX, totalsY, { align: 'right' });
-            totalsY += 6;
-            doc.text(`Sous-total TTC:`, totalsLabelX, totalsY);
-            doc.text(`${totals.subtotalTTC.toFixed(2)} €`, totalsValueX, totalsY, { align: 'right' });
-            totalsY += 6;
-            
+            doc.text(`Sous-total HT:`, totalsLabelX, totalsY); doc.text(`${totals.subtotalHT.toFixed(2)} €`, totalsValueX, totalsY, { align: 'right' }); totalsY += 6;
+            doc.text(`Sous-total TTC:`, totalsLabelX, totalsY); doc.text(`${totals.subtotalTTC.toFixed(2)} €`, totalsValueX, totalsY, { align: 'right' }); totalsY += 6;
             if (state.applyDiscount && totals.discountAmountTTC > 0) {
-                 doc.setTextColor(255, 0, 0);
-                 doc.text(`Remise Club (${state.clubDiscount}%) TTC (Info):`, totalsLabelX, totalsY);
-                 doc.text(`-${totals.discountAmountTTC.toFixed(2)} €`, totalsValueX, totalsY, { align: 'right' });
-                 totalsY += 6;
-                 doc.setTextColor(0);
+                 doc.setTextColor(255, 0, 0); doc.text(`Remise Club (${state.clubDiscount}%) TTC (Info):`, totalsLabelX, totalsY); doc.text(`-${totals.discountAmountTTC.toFixed(2)} €`, totalsValueX, totalsY, { align: 'right' }); totalsY += 6; doc.setTextColor(0);
             }
-
-            if (totals.appliedGraphicFeeTTC > 0) {
-                doc.text(`Frais création graphique TTC:`, totalsLabelX, totalsY);
-                doc.text(`${totals.appliedGraphicFeeTTC.toFixed(2)} €`, totalsValueX, totalsY, { align: 'right' });
-                totalsY += 6;
-            }
-
-            doc.text(`Frais de port HT:`, totalsLabelX, totalsY);
-            doc.text(`${totals.shippingHT.toFixed(2)} €`, totalsValueX, totalsY, { align: 'right' });
-            totalsY += 6;
-            doc.text(`Frais de port TTC:`, totalsLabelX, totalsY);
-            doc.text(`${totals.shippingTTC.toFixed(2)} €`, totalsValueX, totalsY, { align: 'right' });
-            totalsY += 8;
-
-            doc.setFontSize(12);
-            doc.setFont(undefined, 'bold');
-            doc.text(`Total Général TTC:`, totalsLabelX, totalsY);
-            doc.text(`${totals.grandTotalTTC.toFixed(2)} €`, totalsValueX, totalsY, { align: 'right' });
-            totalsY += 8;
-            doc.setTextColor(28, 175, 28);
-            doc.text(totals.downPaymentLabel, totalsLabelX, totalsY);
-            doc.text(`${totals.downPayment.toFixed(2)} €`, totalsValueX, totalsY, { align: 'right' });
-            doc.setTextColor(0);
-            doc.setFont(undefined, 'normal');
-
-            // --- OBSERVATIONS ---
+            if (totals.appliedGraphicFeeTTC > 0) { doc.text(`Frais création graphique TTC:`, totalsLabelX, totalsY); doc.text(`${totals.appliedGraphicFeeTTC.toFixed(2)} €`, totalsValueX, totalsY, { align: 'right' }); totalsY += 6; }
+            doc.text(`Frais de port HT:`, totalsLabelX, totalsY); doc.text(`${totals.shippingHT.toFixed(2)} €`, totalsValueX, totalsY, { align: 'right' }); totalsY += 6;
+            doc.text(`Frais de port TTC:`, totalsLabelX, totalsY); doc.text(`${totals.shippingTTC.toFixed(2)} €`, totalsValueX, totalsY, { align: 'right' }); totalsY += 8;
+            doc.setFontSize(12); doc.setFont(undefined, 'bold');
+            doc.text(`Total Général TTC:`, totalsLabelX, totalsY); doc.text(`${totals.grandTotalTTC.toFixed(2)} €`, totalsValueX, totalsY, { align: 'right' }); totalsY += 8;
+            doc.setTextColor(28, 175, 28); doc.text(totals.downPaymentLabel, totalsLabelX, totalsY); doc.text(`${totals.downPayment.toFixed(2)} €`, totalsValueX, totalsY, { align: 'right' });
+            doc.setTextColor(0); doc.setFont(undefined, 'normal');
             finalY = Math.max(totalsY, doc.internal.pageSize.height - 60);
-            const observations = [
-                'OBSERVATIONS GENERALES',
-                'Prix indiqués en HT et TTC.',
-                'Documents à contrôler.',
-                'Nous informer si modifications à effectuer.',
-                'Ce document est une précommande et non le document final, NORET se garde le droit d\'apporter des modifications et seul l\'accusé de réception envoyé pour validation et signature sera pris en compte.'
-            ];
-            doc.setFillColor(255, 255, 0);
-            doc.rect(14, finalY, 182, 35, 'F');
-            doc.setTextColor(0);
-            doc.setFontSize(9);
-            doc.text(observations[0], 16, finalY + 5, {maxWidth: 178});
-            doc.setFontSize(8);
-            doc.text(observations[1], 16, finalY + 10, {maxWidth: 178});
-            doc.text(observations[2], 16, finalY + 14, {maxWidth: 178});
-            doc.text(observations[3], 16, finalY + 18, {maxWidth: 178});
-            doc.text(observations[4], 16, finalY + 22, {maxWidth: 178});
-
-            // --- SAVE ---
+            const observations = [ 'OBSERVATIONS GENERALES', 'Prix indiqués en HT et TTC.', 'Documents à contrôler.', 'Nous informer si modifications à effectuer.', 'Ce document est une précommande et non le document final, NORET se garde le droit d\'apporter des modifications et seul l\'accusé de réception envoyé pour validation et signature sera pris en compte.' ];
+            doc.setFillColor(255, 255, 0); doc.rect(14, finalY, 182, 35, 'F'); doc.setTextColor(0);
+            doc.setFontSize(9); doc.text(observations[0], 16, finalY + 5, {maxWidth: 178});
+            doc.setFontSize(8); doc.text(observations.slice(1).join('\n'), 16, finalY + 10, {maxWidth: 178});
             doc.save(`devis-bon-de-commande_${state.clubName.replace(/ /g, '_') || 'commande'}_${state.orderDate}.pdf`);
         };
         
         const handleExportExcel = () => {
             if (!state.isOrderValidated) {
-                const p = document.createElement('p');
-                p.textContent = "Veuillez d'abord valider la commande en cliquant sur 'Sauvegarder la Commande' avant de l'exporter.";
-                showModal(dom.mainModal, 'Exportation impossible', p);
-                return;
+                const p = document.createElement('p'); p.textContent = "Veuillez d'abord valider la commande en cliquant sur 'Sauvegarder la Commande' avant de l'exporter.";
+                showModal(dom.mainModal, 'Exportation impossible', p); return;
             }
             if (typeof XLSX === 'undefined') {
-                 const p = document.createElement('p');
-                 p.textContent = "La librairie d'exportation Excel (SheetJS/xlsx) n'a pas pu être chargée.";
-                 showModal(dom.mainModal, 'Erreur de librairie', p);
-                console.error("XLSX library is not loaded."); 
-                return;
+                 const p = document.createElement('p'); p.textContent = "La librairie d'exportation Excel (SheetJS/xlsx) n'a pas pu être chargée.";
+                 showModal(dom.mainModal, 'Erreur de librairie', p); return;
             }
-            
             const excelData = [];
             const columnDefinitions = [
-                {id: 'produit', label: 'Produit'}, {id: 'licencie', label: 'Licencié'},
-                {id: 'specificite', label: 'Spécificité'}, {id: 'options', label: 'Options'},
-                {id: 'tailles', label: 'Tailles & Quantités'}, {id: 'qte', label: 'Qté Totale'},
-                {id: 'prixUHT', label: 'Prix U. HT'}, {id: 'prixUTTC', label: 'Prix U. TTC'},
-                {id: 'totalHT', label: 'Total HT'}, {id: 'totalTTC', label: 'Total TTC'},
-                {id: 'remise', label: 'Remise Appliquée'}, {id: 'geste', label: 'Geste Comm.'},
-            ]
-        
+                {id: 'produit', label: 'Produit'}, {id: 'licencie', label: 'Licencié'}, {id: 'specificite', label: 'Spécificité'},
+                {id: 'options', label: 'Options'}, {id: 'tailles', label: 'Tailles & Quantités'}, {id: 'qte', label: 'Qté Totale'},
+                {id: 'prixUHT', label: 'Prix U. HT'}, {id: 'prixUTTC', label: 'Prix U. TTC'}, {id: 'totalHT', label: 'Total HT'},
+                {id: 'totalTTC', label: 'Total TTC'}, {id: 'remise', label: 'Remise Appliquée'}, {id: 'geste', label: 'Geste Comm.'},
+            ];
             const activeHeaders = columnDefinitions.filter(col => state.excelColumns[col.id] && !(col.id === 'licencie' && state.documentType === 'quote'));
             excelData.push(activeHeaders.map(h => h.label));
-
-            const sortedItems = sortLineItems(state.currentOrderLineItems);
-
-            sortedItems.forEach(item => {
-                const sortedSizeKeys = sortSizeKeys(Object.keys(item.quantitiesPerSize));
-                const sizes = sortedSizeKeys.map(size => `${size}: ${item.quantitiesPerSize[size]}`).join(' | ');
-                
+            sortLineItems(state.currentOrderLineItems).forEach(item => {
+                const sizes = sortSizeKeys(Object.keys(item.quantitiesPerSize)).map(size => `${size}: ${item.quantitiesPerSize[size]}`).join(' | ');
                 const discountAppliedText = state.discountType === 'item' ? (item.applyDiscount ? 'Oui' : 'Non') : 'Globale';
                 const rowData = {
-                    produit: item.productName,
-                    licencie: item.licencieName,
-                    specificite: item.specificity,
-                    options: item.options.join(', '),
-                    tailles: sizes,
-                    qte: item.totalQuantity,
-                    prixUHT: { t: 'n', v: item.unitPriceHT, z: '#,##0.00 €' },
-                    prixUTTC: { t: 'n', v: item.unitPriceTTC, z: '#,##0.00 €' },
-                    totalHT: { t: 'n', v: item.totalPriceHT, z: '#,##0.00 €' },
-                    totalTTC: { t: 'n', v: item.totalPriceTTC, z: '#,##0.00 €' },
-                    remise: discountAppliedText,
-                    geste: item.applyGesture ? 'Oui' : 'Non',
+                    produit: item.productName, licencie: item.licencieName, specificite: item.specificity, options: item.options.join(', '),
+                    tailles: sizes, qte: item.totalQuantity, prixUHT: { t: 'n', v: item.unitPriceHT, z: '#,##0.00 €' },
+                    prixUTTC: { t: 'n', v: item.unitPriceTTC, z: '#,##0.00 €' }, totalHT: { t: 'n', v: item.totalPriceHT, z: '#,##0.00 €' },
+                    totalTTC: { t: 'n', v: item.totalPriceTTC, z: '#,##0.00 €' }, remise: discountAppliedText, geste: item.applyGesture ? 'Oui' : 'Non',
                 };
                 if(state.documentType !== 'order') delete rowData.licencie;
-
-                const row = activeHeaders.map(h => rowData[h.id]);
-                excelData.push(row);
+                excelData.push(activeHeaders.map(h => rowData[h.id]));
             });
-            
              const totals = calculateAllTotals();
              const totalArticles = state.currentOrderLineItems.reduce((acc, item) => acc + item.totalQuantity, 0);
              const dataForSheet = [
-                  [`${state.documentType === 'quote' ? 'Devis' : 'Bon de commande'} ${state.isReassort ? '(Réassort 2 mois)' : ''}`], 
-                  [], 
+                  [`${state.documentType === 'quote' ? 'Devis' : 'Bon de commande'} ${state.isReassort ? '(Réassort 2 mois)' : ''}`], [], 
                   ['Nom du Club:', state.clubName], ['Département:', state.departement], ['N° Client:', state.clientNumber], 
                   [state.documentType === 'quote' ? 'N° Devis:' : 'N° Pré-commande:', state.documentType === 'quote' ? state.quoteNumber : state.preOrderNumber], 
-                  ['Date:', state.orderDate],
-                  ['Note Commande:', state.orderSpecificity],
-                  ['Commande Magasin:', state.isStoreOrder ? 'Oui' : 'Non'],
+                  ['Date:', state.orderDate], ['Note Commande:', state.orderSpecificity], ['Commande Magasin:', state.isStoreOrder ? 'Oui' : 'Non'],
                   ['Total Articles:', totalArticles],
              ];
-             if(state.documentType === 'quote') { dataForSheet.push(['Validité de l\'offre:', '1 mois']); }
+             if(state.documentType === 'quote') dataForSheet.push(['Validité de l\'offre:', '1 mois']);
              dataForSheet.push([], ...excelData);
-        
              const totalsStartColumn = excelData[0].length - 3;
              dataForSheet.push([],
                  Array(totalsStartColumn).fill(null).concat(['Sous-total HT:', { t: 'n', v: totals.subtotalHT, z: '#,##0.00 €' }]),
@@ -1775,384 +1300,211 @@
                  Array(totalsStartColumn).fill(null).concat([{v: "Total Général TTC:", s:{font:{bold:true}}}, { t: 'n', v: totals.grandTotalTTC, z: '#,##0.00 €', s:{font:{bold:true}}}]),
                  Array(totalsStartColumn).fill(null).concat([{v: totals.downPaymentLabel, s:{font:{bold:true}}}, { t: 'n', v: totals.downPayment, z: '#,##0.00 €', s:{font:{bold:true}}}])
              );
-
              const yellowFill = { fgColor: { rgb: "FFFF00" } };
-             const observationsSection = [
-                  [], [],
+             const observationsSection = [ [], [],
                   [{ v: 'OBSERVATIONS GENERALES', s: { font: { bold: true, sz: 12 }, fill: yellowFill } }],
-                  [{ v: 'Prix indiqués en HT et TTC.', s: { fill: yellowFill } }],
-                  [{ v: 'Documents à contrôler.', s: { fill: yellowFill } }],
+                  [{ v: 'Prix indiqués en HT et TTC.', s: { fill: yellowFill } }], [{ v: 'Documents à contrôler.', s: { fill: yellowFill } }],
                   [{ v: 'Nous informer si modifications à effectuer.', s: { fill: yellowFill } }],
                   [{ v: 'Ce document est une précommande et non le document final, NORET se garde le droit d\'apporter des modifications et seul l\'accusé de réception envoyé pour validation et signature sera pris en compte.', s: { fill: yellowFill, alignment: { wrapText: true } } }]
              ];
-
              observationsSection.forEach(row => {
                   row[0] = row[0] || {v: ""};
                   for(let i=1; i < 6; i++){ row.push({v: "", s: {fill: yellowFill}}); }
              });
              dataForSheet.push(...observationsSection);
-
               const wb = XLSX.utils.book_new();
               const ws = XLSX.utils.aoa_to_sheet(dataForSheet);
               ws['!cols'] = activeHeaders.map(h => ({wch: h.label.length > 20 ? 50 : 20}));
-            
              const mergeStartRow = dataForSheet.length - observationsSection.length + 2;
              if (!ws['!merges']) ws['!merges'] = [];
-             ws['!merges'].push({ s: { r: mergeStartRow, c: 0 }, e: { r: mergeStartRow, c: 5 } }); 
-             ws['!merges'].push({ s: { r: mergeStartRow + 1, c: 0 }, e: { r: mergeStartRow + 1, c: 5 } });
-             ws['!merges'].push({ s: { r: mergeStartRow + 2, c: 0 }, e: { r: mergeStartRow + 2, c: 5 } });
-             ws['!merges'].push({ s: { r: mergeStartRow + 3, c: 0 }, e: { r: mergeStartRow + 3, c: 5 } });
-             ws['!merges'].push({ s: { r: mergeStartRow + 4, c: 0 }, e: { r: mergeStartRow + 4, c: 5 } });
-
-
+             ws['!merges'].push({ s: { r: mergeStartRow, c: 0 }, e: { r: mergeStartRow, c: 5 } }, { s: { r: mergeStartRow + 1, c: 0 }, e: { r: mergeStartRow + 1, c: 5 } },
+                                { s: { r: mergeStartRow + 2, c: 0 }, e: { r: mergeStartRow + 2, c: 5 } }, { s: { r: mergeStartRow + 3, c: 0 }, e: { r: mergeStartRow + 3, c: 5 } },
+                                { s: { r: mergeStartRow + 4, c: 0 }, e: { r: mergeStartRow + 4, c: 5 } });
               XLSX.utils.book_append_sheet(wb, ws, 'Devis');
               XLSX.writeFile(wb, `devis-bon-de-commande_${state.clubName.replace(/ /g, '_') || 'commande'}_${state.orderDate}.xlsx`);
         };
         
         const handleEmail = () => {
              if (!state.isOrderValidated) {
-                  const p = document.createElement('p');
-                  p.textContent = "Veuillez d'abord valider la commande en cliquant sur 'Sauvegarder la Commande' avant de l'envoyer.";
-                  showModal(dom.mainModal, 'Envoi impossible', p);
-                  return;
+                  const p = document.createElement('p'); p.textContent = "Veuillez d'abord valider la commande en cliquant sur 'Sauvegarder la Commande' avant de l'envoyer.";
+                  showModal(dom.mainModal, 'Envoi impossible', p); return;
              }
              if (!state.clubName || !state.clientNumber) {
-                 const p = document.createElement('p');
-                 p.textContent = "Veuillez renseigner le nom du club et le N° client avant d'envoyer l'e-mail.";
-                 showModal(dom.mainModal, 'Information manquante', p);
-                 return;
+                 const p = document.createElement('p'); p.textContent = "Veuillez renseigner le nom du club et le N° client avant d'envoyer l'e-mail.";
+                 showModal(dom.mainModal, 'Information manquante', p); return;
              }
-        
-             const to = "aude@noret.com";
-             const subject = `Précommande - ${state.clubName} - ${state.clientNumber}`;
-             
-             const bodyParts = [
-                 "Bonjour,",
-                 "",
-                 "Veuillez trouver le bon de commande en pièce jointe.",
-                 "",
-                 `Rappel du N° de Précommande : ${state.preOrderNumber || 'Non spécifié'}`,
-                 `Rappel des spécificités de la commande : ${state.orderSpecificity || 'Aucune'}`,
-                 "",
-                 "----------------------------------------------------------------",
-                 "IMPORTANT : N'oubliez pas de joindre le fichier PDF du bon de commande que vous avez généré.",
-                 "----------------------------------------------------------------",
-                 "",
-                 "Cordialement,"
-             ];
-         
-             const body = bodyParts.join('\n');
+             const to = "aude@noret.com"; const subject = `Précommande - ${state.clubName} - ${state.clientNumber}`;
+             const body = `Bonjour,\n\nVeuillez trouver le bon de commande en pièce jointe.\n\nRappel du N° de Précommande : ${state.preOrderNumber || 'Non spécifié'}\nRappel des spécificités de la commande : ${state.orderSpecificity || 'Aucune'}\n\n----------------------------------------------------------------\nIMPORTANT : N'oubliez pas de joindre le fichier PDF du bon de commande que vous avez généré.\n----------------------------------------------------------------\n\nCordialement,`;
              const mailtoLink = `mailto:${to}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-        
              const p = document.createElement('p');
-             p.innerHTML = `
-                 Vous allez être redirigé vers votre client de messagerie par défaut pour envoyer un e-mail à <b>aude@noret.com</b>.<br><br>
-                 <b class="text-red-600">N'oubliez pas de joindre manuellement le fichier PDF</b> que vous avez généré avec le bouton "Exporter en PDF".<br><br>
-                 Cliquez sur "Continuer" pour ouvrir votre client de messagerie.
-             `;
+             p.innerHTML = `Vous allez être redirigé vers votre client de messagerie par défaut pour envoyer un e-mail à <b>aude@noret.com</b>.<br><br><b class="text-red-600">N'oubliez pas de joindre manuellement le fichier PDF</b> que vous avez généré avec le bouton "Exporter en PDF".<br><br>Cliquez sur "Continuer" pour ouvrir votre client de messagerie.`;
              const actions = [
                  { label: 'Annuler', onClick: () => hideModal(dom.mainModal), className: 'bg-gray-300' },
-                 { 
-                     label: 'Continuer', 
-                     onClick: () => {
-                         window.location.href = mailtoLink;
-                         hideModal(dom.mainModal);
-                     }, 
-                     className: 'bg-blue-600 hover:bg-blue-700' 
-                 }
+                 { label: 'Continuer', onClick: () => { window.location.href = mailtoLink; hideModal(dom.mainModal); }, className: 'bg-blue-600 hover:bg-blue-700' }
              ];
              showModal(dom.mainModal, "Préparer l'envoi par e-mail", p, actions);
         };
         
         const switchToTab = (tabId) => {
             document.querySelectorAll('.main-tab-btn').forEach(btn => {
-                btn.classList.remove('border-indigo-500', 'text-indigo-600');
-                btn.classList.add('text-gray-500', 'hover:text-gray-700');
+                btn.classList.remove('border-indigo-500', 'text-indigo-600'); btn.classList.add('text-gray-500', 'hover:text-gray-700');
             });
             const tabButton = document.querySelector(`[data-tab-id="${tabId}"]`);
-            tabButton.classList.add('border-indigo-500', 'text-indigo-600');
-            tabButton.classList.remove('text-gray-500', 'hover:text-gray-700');
-
+            tabButton.classList.add('border-indigo-500', 'text-indigo-600'); tabButton.classList.remove('text-gray-500', 'hover:text-gray-700');
             document.querySelectorAll('.main-tab-content').forEach(content => content.classList.remove('active'));
             document.getElementById(tabId).classList.add('active');
         };
 
         const promptForSavedOrdersAccess = () => {
-            const container = document.createElement('div');
-            container.className = 'space-y-4';
-            const p = document.createElement('p');
-            p.textContent = "Pour accéder aux commandes sauvegardées, veuillez saisir le code d'autorisation.";
-            const input = document.createElement('input');
-            input.type = 'password';
-            input.id = 'access-code-input';
-            input.className = 'mt-1 block w-full rounded-md border-gray-300 shadow-sm';
-            const errorMsg = document.createElement('p');
-            errorMsg.id = 'access-code-error';
-            errorMsg.className = 'text-red-500 text-sm hidden';
-            errorMsg.textContent = 'Code incorrect.';
-            container.appendChild(p);
-            container.appendChild(input);
-            container.appendChild(errorMsg);
-
+            const container = document.createElement('div'); container.className = 'space-y-4';
+            const p = document.createElement('p'); p.textContent = "Pour accéder aux commandes sauvegardées, veuillez saisir le code d'autorisation.";
+            const input = document.createElement('input'); input.type = 'password'; input.id = 'access-code-input'; input.className = 'mt-1 block w-full rounded-md border-gray-300 shadow-sm';
+            const errorMsg = document.createElement('p'); errorMsg.id = 'access-code-error'; errorMsg.className = 'text-red-500 text-sm hidden'; errorMsg.textContent = 'Code incorrect.';
+            container.appendChild(p); container.appendChild(input); container.appendChild(errorMsg);
             const actions = [
                 { label: 'Annuler', onClick: () => hideModal(dom.mainModal), className: 'bg-gray-300' },
-                { 
-                    label: 'Confirmer', 
-                    onClick: () => {
-                        const enteredCode = document.getElementById('access-code-input').value;
-                        if (enteredCode === '582069') {
-                            state.isSavedOrdersTabLocked = false;
-                            hideModal(dom.mainModal);
-                            switchToTab('saved-orders');
-                        } else {
-                            document.getElementById('access-code-error').classList.remove('hidden');
-                            document.getElementById('access-code-input').classList.add('border-red-500');
-                            input.focus();
-                        }
-                    }, 
-                    className: 'bg-green-600 hover:bg-green-700' 
-                }
+                { label: 'Confirmer', onClick: () => {
+                    if (document.getElementById('access-code-input').value === '582069') {
+                        state.isSavedOrdersTabLocked = false; hideModal(dom.mainModal); switchToTab('saved-orders');
+                    } else {
+                        document.getElementById('access-code-error').classList.remove('hidden'); document.getElementById('access-code-input').classList.add('border-red-500'); input.focus();
+                    }
+                }, className: 'bg-green-600 hover:bg-green-700' }
             ];
             showModal(dom.mainModal, 'Accès Protégé', container, actions);
         };
 
         // --- INITIALIZATION ---
         const init = () => {
+            handleUrlParameters();
             dom.orderDate.value = new Date().toISOString().split('T')[0];
             const savedClients = localStorage.getItem('clientDatabase');
-            if (savedClients) { clientDatabase = JSON.parse(savedClients); }
+            if (savedClients) clientDatabase = JSON.parse(savedClients);
             updateDatalists();
-
             const savedOrdersData = localStorage.getItem('savedOrdersDB');
-            if (savedOrdersData) { state.savedOrders = JSON.parse(savedOrdersData); }
-
+            if (savedOrdersData) state.savedOrders = JSON.parse(savedOrdersData);
             document.body.addEventListener('input', (e) => {
                  if (!e.target) return;
                  state.isOrderValidated = false;
                  const { id, value } = e.target;
-
                  if (id === 'clubName') {
                     state.clubName = value;
                     const found = clientDatabase.find(c => c.clubName === value);
-                    if (found) {
-                        state.clientNumber = found.clientNumber;
-                        dom.clientNumber.value = found.clientNumber;
-                        state.departement = found.departement || '';
-                        dom.departement.value = state.departement;
-                    }
+                    if (found) { state.clientNumber = found.clientNumber; dom.clientNumber.value = found.clientNumber; state.departement = found.departement || ''; dom.departement.value = state.departement; }
                  } else if (id === 'clientNumber') {
                     state.clientNumber = value;
                     const found = clientDatabase.find(c => c.clientNumber === value);
-                    if (found) {
-                        state.clubName = found.clubName;
-                        dom.clubName.value = found.clubName;
-                        state.departement = found.departement || '';
-                        dom.departement.value = state.departement;
-                    }
+                    if (found) { state.clubName = found.clubName; dom.clubName.value = found.clubName; state.departement = found.departement || ''; dom.departement.value = state.departement; }
                  } else if (id === 'departement') {
                      state.departement = value;
                  }
             });
-
             document.body.addEventListener('focusout', (e) => {
-                if (e.target.id === 'clubName' || e.target.id === 'clientNumber' || e.target.id === 'departement') {
-                    saveClientInfo();
-                }
+                if (e.target.id === 'clubName' || e.target.id === 'clientNumber' || e.target.id === 'departement') saveClientInfo();
             });
-
             document.body.addEventListener('change', (e) => {
                 if (!e.target) return;
                 state.isOrderValidated = false;
-                
                 if (e.target.id === 'preOrderNumber') state.preOrderNumber = e.target.value;
                 if (e.target.id === 'orderDate') {
                      state.orderDate = e.target.value;
-                     if(state.documentType === 'quote') {
-                          const date = new Date(state.orderDate);
-                          state.quoteNumber = `${String(date.getDate()).padStart(2, '0')}${String(date.getMonth() + 1).padStart(2, '0')}${date.getFullYear()}`;
-                     }
+                     if(state.documentType === 'quote') { const date = new Date(state.orderDate); state.quoteNumber = `${String(date.getDate()).padStart(2, '0')}${String(date.getMonth() + 1).padStart(2, '0')}${date.getFullYear()}`; }
                 }
                 if (e.target.id === 'orderSpecificity') state.orderSpecificity = e.target.value;
                 if (e.target.id === 'licencieName') state.licencieName = e.target.value;
-                if (e.target.id === 'clubDiscount') {
-                    state.clubDiscount = parseFloat(e.target.value) || 0;
-                }
+                if (e.target.id === 'clubDiscount') state.clubDiscount = parseFloat(e.target.value) || 0;
                 if (e.target.name === 'doc-type') {
                     state.documentType = e.target.value;
-                    if(state.documentType === 'quote') {
-                         state.isReassort = false;
-                         state.orderScope = 'global';
-                         const date = new Date(state.orderDate);
-                         state.quoteNumber = `${String(date.getDate()).padStart(2, '0')}${String(date.getMonth() + 1).padStart(2, '0')}${date.getFullYear()}`;
-                     }
+                    if(state.documentType === 'quote') { state.isReassort = false; state.orderScope = 'global'; const date = new Date(state.orderDate); state.quoteNumber = `${String(date.getDate()).padStart(2, '0')}${String(date.getMonth() + 1).padStart(2, '0')}${date.getFullYear()}`; }
                 }
                  if (e.target.id === 'doc-type-reassort') {
                       const checked = e.target.checked;
-                      const action = () => {
-                          state.isReassort = checked;
-                          state.currentOrderLineItems = [];
-                          if (checked) state.documentType = 'order';
-                          hideModal(dom.mainModal);
-                          renderAll();
-                      };
+                      const action = () => { state.isReassort = checked; state.currentOrderLineItems = []; if (checked) state.documentType = 'order'; hideModal(dom.mainModal); renderAll(); };
                       if (state.currentOrderLineItems.length > 0) {
-                          const p = document.createElement('p');
-                          p.textContent = `Ce changement videra le panier actuel. Êtes-vous sûr de vouloir continuer ?`;
+                          const p = document.createElement('p'); p.textContent = `Ce changement videra le panier actuel. Êtes-vous sûr de vouloir continuer ?`;
                           showModal(dom.mainModal, 'Changement de mode', p, [
                               {label: 'Annuler', onClick: () => {e.target.checked = !checked; hideModal(dom.mainModal)}, className: 'bg-gray-300'},
                               {label: 'Continuer', onClick: action, className: 'bg-red-600'}
                           ]);
                       } else { action(); }
                  }
-                if (e.target.id === 'custom-design-order-check') { state.isCustomDesignOrder = e.target.checked; }
-                if (e.target.id === 'imperatif-check') {
-                    state.isImperatif = e.target.checked;
-                    if (!state.isImperatif) { state.imperatifNote = ''; }
+                if (e.target.id === 'custom-design-order-check') state.isCustomDesignOrder = e.target.checked;
+                if (e.target.id === 'imperatif-check') { state.isImperatif = e.target.checked; if (!state.isImperatif) state.imperatifNote = ''; }
+                if (e.target.id === 'imperatif-note') state.imperatifNote = e.target.value;
+                if (e.target.name === 'scope') state.orderScope = e.target.value;
+                if (e.target.id === 'store-order-check') state.isStoreOrder = e.target.checked;
+                if (e.target.id === 'apply-discount-check') { state.applyDiscount = e.target.checked; if (!state.applyDiscount) state.clubDiscount = 0; }
+                if (e.target.name === 'discount-type') state.discountType = e.target.value;
+                if (e.target.id === 'current-product-select') { state.currentProduct = e.target.value; resetProductFormFields(); calculateCurrentFormPrice(); }
+                if (e.target.classList.contains('size-input')) { state.currentQuantities[e.target.dataset.size] = e.target.value; calculateCurrentFormPrice(); }
+                if (e.target.id === 'accessory-qty' || e.target.id === 'quote-qty') { state.currentAccessoryQuantity = e.target.value; calculateCurrentFormPrice(); }
+                if (e.target.id === 'manual-price') state.manualUnitPrice = e.target.value;
+                if (e.target.id === 'current-color-select') state.currentColor = e.target.value;
+                if (e.target.id === 'specificity') state.currentSpecificity = e.target.value;
+                if (e.target.id === 'commercial-gesture-check') {
+                    if (e.target.checked) { promptForForceCode(() => { state.applyCommercialGesture = true; calculateCurrentFormPrice(); renderProductForm(); }); e.target.checked = false; } 
+                    else { state.applyCommercialGesture = false; calculateCurrentFormPrice(); }
                 }
-                if (e.target.id === 'imperatif-note') { state.imperatifNote = e.target.value; }
-                if (e.target.name === 'scope') { state.orderScope = e.target.value; }
-                if (e.target.id === 'store-order-check') { state.isStoreOrder = e.target.checked; }
-                if (e.target.id === 'apply-discount-check') {
-                    state.applyDiscount = e.target.checked;
-                    if (!state.applyDiscount) { state.clubDiscount = 0; }
-                }
-                if (e.target.name === 'discount-type') { state.discountType = e.target.value; }
-
-                if (e.target.id === 'current-product-select') {
-                    state.currentProduct = e.target.value;
-                    resetProductFormFields();
-                    calculateCurrentFormPrice();
-                }
-                if (e.target.classList.contains('size-input')) {
-                    state.currentQuantities[e.target.dataset.size] = e.target.value;
-                    calculateCurrentFormPrice();
-                }
-                if (e.target.id === 'accessory-qty' || e.target.id === 'quote-qty') {
-                    state.currentAccessoryQuantity = e.target.value;
-                    calculateCurrentFormPrice();
-                }
-                 if (e.target.id === 'manual-price') state.manualUnitPrice = e.target.value;
-                 if (e.target.id === 'current-color-select') state.currentColor = e.target.value;
-                 if (e.target.id === 'specificity') state.currentSpecificity = e.target.value;
-                 if (e.target.id === 'commercial-gesture-check') {
-                    if (e.target.checked) {
-                        promptForForceCode(() => {
-                            state.applyCommercialGesture = true;
-                            calculateCurrentFormPrice();
-                            renderProductForm();
-                        });
-                        e.target.checked = false;
-                    } else {
-                        state.applyCommercialGesture = false;
-                        calculateCurrentFormPrice();
-                    }
-                 }
-                 if (e.target.classList.contains('option-checkbox')) {
-                    const optionName = e.target.dataset.optionName;
-                    const optionGroup = e.target.dataset.optionGroup;
+                if (e.target.classList.contains('option-checkbox')) {
+                    const optionName = e.target.dataset.optionName; const optionGroup = e.target.dataset.optionGroup;
                     if (optionGroup === 'length') {
                         const allLengthOptions = allAvailableProducts.filter(p => p.optionGroup === 'length').map(p => p.name);
                         const nonLengthOptions = state.currentSelectedOptions.filter(opt => !allLengthOptions.includes(opt));
-                         state.currentSelectedOptions = e.target.checked ? [...nonLengthOptions, optionName] : nonLengthOptions;
+                        state.currentSelectedOptions = e.target.checked ? [...nonLengthOptions, optionName] : nonLengthOptions;
                     } else {
-                         state.currentSelectedOptions = e.target.checked ? [...state.currentSelectedOptions, optionName] : state.currentSelectedOptions.filter(o => o !== optionName);
+                        state.currentSelectedOptions = e.target.checked ? [...state.currentSelectedOptions, optionName] : state.currentSelectedOptions.filter(o => o !== optionName);
                     }
                     calculateCurrentFormPrice();
-                 }
-                 renderAll();
+                }
+                renderAll();
             });
-
             document.body.addEventListener('click', (e) => {
                  if (!e.target) return;
-                 // Product Form
-                if(e.target.id === 'add-product-btn' || e.target.parentElement?.id === 'add-product-btn') handleProductAdd();
-                if(e.target.id === 'generate-specificity-btn' || e.target.parentElement?.id === 'generate-specificity-btn') { /* AI function placeholder */ }
-
-                 // Table Actions
+                 if(e.target.id === 'add-product-btn' || e.target.parentElement?.id === 'add-product-btn') handleProductAdd();
                  const actionTarget = e.target.closest('[data-action]');
                  if(actionTarget){
                      const { action, itemId } = actionTarget.dataset;
-                     if(action === 'remove-item'){
-                         state.currentOrderLineItems = state.currentOrderLineItems.filter(item => item.id != itemId);
-                         state.isOrderValidated = false;
-                         renderAll();
-                     }
-                     if(action === 'toggle-discount'){
-                         state.currentOrderLineItems = state.currentOrderLineItems.map(item => item.id == itemId ? { ...item, applyDiscount: !item.applyDiscount } : item);
-                         state.isOrderValidated = false;
-                         renderAll();
-                     }
+                     if(action === 'remove-item'){ state.currentOrderLineItems = state.currentOrderLineItems.filter(item => item.id != itemId); state.isOrderValidated = false; renderAll(); }
+                     if(action === 'toggle-discount'){ state.currentOrderLineItems = state.currentOrderLineItems.map(item => item.id == itemId ? { ...item, applyDiscount: !item.applyDiscount } : item); state.isOrderValidated = false; renderAll(); }
                     if (action === 'edit-item') {
                          const itemToEdit = state.currentOrderLineItems.find(i => i.id == itemId);
                          if (itemToEdit) {
                              const product = allAvailableProducts.find(p => p.name === itemToEdit.productName);
-                             state.currentProduct = itemToEdit.productName;
-                             state.currentQuantities = itemToEdit.quantitiesPerSize;
-                             if(product?.type === 'accessoire' && (!product.sizeType || product.sizeType === 'unique')){
-                                 state.currentAccessoryQuantity = itemToEdit.totalQuantity;
-                             } else { state.currentAccessoryQuantity = ''; }
-                             state.currentSelectedOptions = itemToEdit.options;
-                             state.currentSpecificity = itemToEdit.specificity;
-                             state.currentColor = itemToEdit.color;
-                             state.manualUnitPrice = itemToEdit.initialManualPrice || '';
+                             state.currentProduct = itemToEdit.productName; state.currentQuantities = itemToEdit.quantitiesPerSize;
+                             if(product?.type === 'accessoire' && (!product.sizeType || product.sizeType === 'unique')) state.currentAccessoryQuantity = itemToEdit.totalQuantity;
+                             else state.currentAccessoryQuantity = '';
+                             state.currentSelectedOptions = itemToEdit.options; state.currentSpecificity = itemToEdit.specificity;
+                             state.currentColor = itemToEdit.color; state.manualUnitPrice = itemToEdit.initialManualPrice || '';
                              state.currentOrderLineItems = state.currentOrderLineItems.filter(i => i.id != itemId);
-                             state.isOrderValidated = false;
-                             renderAll();
+                             state.isOrderValidated = false; renderAll();
                          }
                     }
                  }
-
-                 // Main Tabs
                  const mainTabTarget = e.target.closest('.main-tab-btn');
                  if (mainTabTarget) {
                     const tabId = mainTabTarget.dataset.tabId;
-                    if (tabId === 'saved-orders' && state.isSavedOrdersTabLocked) {
-                        promptForSavedOrdersAccess();
-                    } else { switchToTab(tabId); }
+                    if (tabId === 'saved-orders' && state.isSavedOrdersTabLocked) promptForSavedOrdersAccess();
+                    else switchToTab(tabId);
                  }
-
-                 // Product Tabs
                  const productTabTarget = e.target.closest('.product-tab-btn');
                  if(productTabTarget){
                        document.querySelectorAll('.product-tab-btn').forEach(btn => {
-                            btn.classList.remove('border-indigo-500', 'text-indigo-600');
-                            btn.classList.add('text-gray-500', 'hover:text-gray-700');
+                            btn.classList.remove('border-indigo-500', 'text-indigo-600'); btn.classList.add('text-gray-500', 'hover:text-gray-700');
                        });
-                       productTabTarget.classList.add('border-indigo-500', 'text-indigo-600');
-                       productTabTarget.classList.remove('text-gray-500', 'hover:text-gray-700');
-                       state.activeTab = productTabTarget.dataset.tab;
-                       state.currentProduct = '';
-                       resetProductFormFields();
-                       renderProductForm();
+                       productTabTarget.classList.add('border-indigo-500', 'text-indigo-600'); productTabTarget.classList.remove('text-gray-500', 'hover:text-gray-700');
+                       state.activeTab = productTabTarget.dataset.tab; state.currentProduct = '';
+                       resetProductFormFields(); renderProductForm();
                  }
-                
-                 // Main Action Buttons
                 if (e.target.id === 'new-order-btn') handleNewOrder();
                 if (e.target.id === 'save-order-btn') handleSaveOrderClick();
                 if (e.target.id === 'export-excel-btn') handleExportExcel();
                 if (e.target.id === 'export-pdf-btn') handleExportPdf();
                 if (e.target.id === 'send-email-btn') handleEmail();
-                if (e.target.id === 'customize-export-btn') dom.excelModal.classList.add('is-open');
-
-                // Modal Buttons
                 if (e.target.id === 'main-modal-close-btn') hideModal(dom.mainModal);
                 if (e.target.id === 'excel-modal-validate-btn') hideModal(dom.excelModal);
             });
-            
-            // Excel Modal Logic
-            dom.excelColumnsContainer.innerHTML = Object.keys(state.excelColumns).map(key => `
-                <label class="flex items-center space-x-2">
-                    <input type="checkbox" data-column-key="${key}" class="excel-column-check" ${state.excelColumns[key] ? 'checked' : ''}/>
-                    <span>${key.charAt(0).toUpperCase() + key.slice(1)}</span>
-                </label>
-            `).join('');
-            dom.excelColumnsContainer.addEventListener('change', e => {
-                if(e.target.classList.contains('excel-column-check')){
-                    state.excelColumns[e.target.dataset.columnKey] = e.target.checked;
-                }
-            });
-
-            // Saved Orders List Actions
+            dom.excelColumnsContainer.innerHTML = Object.keys(state.excelColumns).map(key => `<label class="flex items-center space-x-2"><input type="checkbox" data-column-key="${key}" class="excel-column-check" ${state.excelColumns[key] ? 'checked' : ''}/><span>${key.charAt(0).toUpperCase() + key.slice(1)}</span></label>`).join('');
+            dom.excelColumnsContainer.addEventListener('change', e => { if(e.target.classList.contains('excel-column-check')) state.excelColumns[e.target.dataset.columnKey] = e.target.checked; });
             dom.savedOrdersList.addEventListener('click', (e) => {
                 const target = e.target.closest('[data-action]');
                 if (!target) return;
@@ -2162,101 +1514,62 @@
                     if (orderToLoad) {
                         resetForm();
                         const loadedState = JSON.parse(JSON.stringify(orderToLoad));
-                        const orderKeys = [
-                            'orderId', 'isReassort', 'isCustomDesignOrder', 'isStoreOrder', 'applyDiscount', 'clubName', 
-                            'departement', 'clientNumber', 'preOrderNumber', 'quoteNumber', 'orderDate', 
-                            'licencieName', 'clubDiscount', 'currentOrderLineItems', 'discountType', 
-                            'orderScope', 'documentType', 'orderSpecificity', 'isImperatif', 'imperatifNote'
-                        ];
-                        orderKeys.forEach(key => {
-                            if (loadedState[key] !== undefined) { state[key] = loadedState[key]; }
-                        });
+                        const orderKeys = [ 'orderId', 'isReassort', 'isCustomDesignOrder', 'isStoreOrder', 'applyDiscount', 'clubName', 'departement', 'clientNumber', 'preOrderNumber', 'quoteNumber', 'orderDate', 'licencieName', 'clubDiscount', 'currentOrderLineItems', 'discountType', 'orderScope', 'documentType', 'orderSpecificity', 'isImperatif', 'imperatifNote' ];
+                        orderKeys.forEach(key => { if (loadedState[key] !== undefined) state[key] = loadedState[key]; });
                         state.currentOrderLineItems = state.currentOrderLineItems || [];
-                        state.isOrderValidated = true;
-                        switchToTab('order-creation');
-                        renderAll();
+                        state.isOrderValidated = true; switchToTab('order-creation'); renderAll();
                     }
                 } else if (target.dataset.action === 'delete-order') {
-                    const p = document.createElement('p');
-                    p.textContent = 'Êtes-vous sûr de vouloir supprimer cette commande ? Cette action est irréversible.';
+                    const p = document.createElement('p'); p.textContent = 'Êtes-vous sûr de vouloir supprimer cette commande ? Cette action est irréversible.';
                     showModal(dom.mainModal, 'Confirmer la suppression', p, [
                         { label: 'Annuler', onClick: () => hideModal(dom.mainModal), className: 'bg-gray-300' },
-                        { 
-                            label: 'Supprimer', 
-                            onClick: () => {
+                        { label: 'Supprimer', onClick: () => {
                                 state.savedOrders = state.savedOrders.filter(o => o.orderId !== orderId);
                                 localStorage.setItem('savedOrdersDB', JSON.stringify(state.savedOrders));
-                                renderSavedOrders();
-                                hideModal(dom.mainModal);
-                            }, 
-                            className: 'bg-red-600'
-                        }
+                                renderSavedOrders(); hideModal(dom.mainModal);
+                            }, className: 'bg-red-600' }
                     ]);
                 }
             });
-
-            // JSON Import/Export
             dom.exportOrdersJsonBtn.addEventListener('click', () => {
-                if (state.savedOrders.length === 0) {
-                    showModal(dom.mainModal, 'Exportation impossible', document.createTextNode("Il n'y a aucune commande à exporter."));
-                    return;
-                }
+                if (state.savedOrders.length === 0) { showModal(dom.mainModal, 'Exportation impossible', document.createTextNode("Il n'y a aucune commande à exporter.")); return; }
                 const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(JSON.stringify(state.savedOrders, null, 2));
                 let linkElement = document.createElement('a');
-                linkElement.setAttribute('href', dataUri);
-                linkElement.setAttribute('download', 'commandes_sauvegardees.json');
+                linkElement.setAttribute('href', dataUri); linkElement.setAttribute('download', 'commandes_sauvegardees.json');
                 linkElement.click();
             });
             dom.importOrdersJsonBtn.addEventListener('click', () => dom.jsonOrdersFileInput.click());
             dom.jsonOrdersFileInput.addEventListener('change', (event) => {
-                const file = event.target.files[0];
-                if (!file) return;
+                const file = event.target.files[0]; if (!file) return;
                 const reader = new FileReader();
                 reader.onload = (e) => {
                     try {
                         const loadedOrders = JSON.parse(e.target.result);
                         if (!Array.isArray(loadedOrders)) throw new Error("Fichier JSON invalide.");
-                        const p = document.createElement('p');
-                        p.textContent = 'Fusionner les nouvelles commandes avec la liste existante, ou remplacer entièrement la liste ?';
+                        const p = document.createElement('p'); p.textContent = 'Fusionner les nouvelles commandes avec la liste existante, ou remplacer entièrement la liste ?';
                         showModal(dom.mainModal, 'Charger des commandes', p, [
                             { label: 'Annuler', onClick: () => hideModal(dom.mainModal), className: 'bg-gray-300' },
-                            { 
-                                label: 'Fusionner', 
-                                onClick: () => {
+                            { label: 'Fusionner', onClick: () => {
                                     const existingIds = new Set(state.savedOrders.map(o => o.orderId));
                                     const newOrders = loadedOrders.filter(o => !existingIds.has(o.orderId));
                                     state.savedOrders.push(...newOrders);
                                     localStorage.setItem('savedOrdersDB', JSON.stringify(state.savedOrders));
-                                    renderSavedOrders();
-                                    hideModal(dom.mainModal);
-                                }, 
-                                className: 'bg-blue-600'
-                            },
-                            { 
-                                label: 'Remplacer', 
-                                onClick: () => {
+                                    renderSavedOrders(); hideModal(dom.mainModal);
+                                }, className: 'bg-blue-600' },
+                            { label: 'Remplacer', onClick: () => {
                                     state.savedOrders = loadedOrders;
                                     localStorage.setItem('savedOrdersDB', JSON.stringify(state.savedOrders));
-                                    renderSavedOrders();
-                                    hideModal(dom.mainModal);
-                                }, 
-                                className: 'bg-red-600'
-                            }
+                                    renderSavedOrders(); hideModal(dom.mainModal);
+                                }, className: 'bg-red-600' }
                         ]);
-                    } catch (error) {
-                        showModal(dom.mainModal, 'Erreur Fichier JSON', document.createTextNode(`Erreur de lecture : ${error.message}`));
-                    } finally { event.target.value = ''; }
+                    } catch (error) { showModal(dom.mainModal, 'Erreur Fichier JSON', document.createTextNode(`Erreur de lecture : ${error.message}`)); } 
+                    finally { event.target.value = ''; }
                 };
                 reader.readAsText(file);
             });
-
-            // Initial render
             renderAll();
         };
-
-        // Start the application
         document.addEventListener('DOMContentLoaded', init);
-
     </script>
 </body>
 </html>
