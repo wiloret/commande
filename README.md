@@ -3,1573 +3,1544 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Outil de devis/bon de commande (Autonome)</title>
+    <title>Outil Devis Interactif Noret</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
-        /* A little bit of custom CSS for better UX */
-        body {
-            font-family: 'Inter', sans-serif;
-        }
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
-        .modal {
-            display: none; /* Hidden by default */
-        }
-        .modal.is-open {
-            display: flex; /* Display when open */
-        }
-        /* Style for more visible input fields */
-        input[type="text"], input[type="number"], input[type="date"], select, textarea {
-            background-color: #f3f4f6; /* bg-gray-100 */
-            border-color: #9ca3af; /* border-gray-400 */
-        }
-        input[type="text"]:focus, input[type="number"]:focus, input[type="date"]:focus, select:focus, textarea:focus {
-            --tw-ring-color: #4f46e5; /* ring-indigo-500 */
-            border-color: #4f46e5; /* border-indigo-500 */
-        }
-        .main-tab-content {
-            display: none;
-        }
-        .main-tab-content.active {
-            display: block;
-        }
+        body { font-family: 'Inter', sans-serif; }
+        .collapsible-container .collapsible-content { display: none; }
+        .collapsible-container.is-open > .collapsible-content { display: block; }
+        .collapsible-container.is-open > .collapsible-trigger .chevron { transform: rotate(180deg); }
+        .product-card { transition: all 0.3s ease-in-out; }
     </style>
 </head>
-<body class="bg-gray-50">
+<body class="bg-slate-100">
 
-    <div id="app-container">
-        <div id="main-modal" class="modal fixed inset-0 bg-black bg-opacity-50 z-50 justify-center items-center p-4">
-            <div class="bg-white rounded-lg shadow-xl p-6 w-full max-w-md">
-                <h3 id="main-modal-title" class="text-xl font-bold text-gray-800 mb-4">Titre du Modal</h3>
-                <div id="main-modal-body" class="text-gray-600 mb-6">Contenu du modal.</div>
-                <div id="main-modal-actions" class="flex justify-end space-x-3">
-                    <button id="main-modal-close-btn" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg">Fermer</button>
+    <div class="flex h-screen">
+        <!-- Sidebar -->
+        <aside class="w-80 bg-white shadow-lg p-6 overflow-y-auto flex flex-col h-full">
+            <div>
+                <img src="https://www.noret.com/img/noret-logo-1599577348.jpg" alt="Noret Logo" class="h-12 w-auto mx-auto mb-6">
+                <div class="space-y-4">
+                    <div>
+                        <h3 class="text-md font-bold text-gray-800 pb-2">1. Paramètres du document</h3>
+                        <div class="space-y-3 bg-slate-50 p-4 rounded-lg">
+                            <div class="flex items-center justify-between">
+                                <label for="club-name-input" class="block text-sm font-medium text-gray-700">Nom du Club / Client</label>
+                            </div>
+                            <input type="text" id="club-name-input" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" placeholder="Ex: Vélo Club Anjou">
+                            
+                             <div class="relative flex items-start">
+                                <div class="flex h-5 items-center">
+                                    <input id="custom-creation-check" type="checkbox" class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
+                                </div>
+                                <div class="ml-3 text-sm">
+                                    <label for="custom-creation-check" class="font-medium text-gray-700">Création Personnalisée (TEAM)</label>
+                                    <p class="text-gray-500 text-xs">Cochez pour un nouveau visuel (forfait maquette applicable).</p>
+                                </div>
+                            </div>
+                            <div class="border-t border-gray-200 pt-3">
+                                 <p class="text-xs text-center font-semibold text-gray-600 mb-2">Choisissez un mode :</p>
+                                <div class="flex items-center justify-around gap-2">
+                                     <div class="relative flex items-start">
+                                        <div class="flex h-5 items-center">
+                                            <input id="gamme-club-mode-check" name="mode-selection" type="radio" class="h-4 w-4 rounded-full border-gray-300 text-green-600 focus:ring-green-500">
+                                        </div>
+                                        <div class="ml-2 text-sm">
+                                            <label for="gamme-club-mode-check" class="font-medium text-gray-700">Gamme Club</label>
+                                        </div>
+                                    </div>
+                                    <div class="relative flex items-start">
+                                        <div class="flex h-5 items-center">
+                                            <input id="devis-mode-check" name="mode-selection" type="radio" class="h-4 w-4 rounded-full border-gray-300 text-indigo-600 focus:ring-indigo-500">
+                                        </div>
+                                        <div class="ml-2 text-sm">
+                                            <label for="devis-mode-check" class="font-medium text-gray-700">Devis</label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                             <div id="maquette-link-container" class="hidden">
+                                <label for="maquette-link-input" class="block text-sm font-medium text-gray-700 mt-2">Lien Maquette (Optionnel)</label>
+                                <input type="text" id="maquette-link-input" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm" placeholder="https://...">
+                            </div>
+                        </div>
+                    </div>
+                    <div id="category-filters" class="border-t border-gray-200 pt-4">
+                        <!-- Navigation will be injected here by JS -->
+                    </div>
                 </div>
             </div>
-        </div>
-
-        <div id="excel-modal" class="modal fixed inset-0 bg-black bg-opacity-50 z-50 justify-center items-center p-4">
-            <div class="bg-white rounded-lg shadow-xl p-6 w-full max-w-md">
-                <h3 class="text-xl font-bold text-gray-800 mb-4">Personnaliser les colonnes de l'export Excel</h3>
-                <div id="excel-columns-container" class="grid grid-cols-2 gap-4">
-                    <!-- Column toggles will be inserted here by JS -->
-                </div>
-                <div class="flex justify-end space-x-3 mt-6">
-                     <button id="excel-modal-validate-btn" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg">Valider</button>
-                </div>
+            <div class="mt-auto pt-6">
+                <button id="general-tariff-btn" class="w-full bg-slate-700 hover:bg-slate-800 text-white font-bold py-2 px-4 rounded-lg text-sm">Voir le Tarif Général 2025/26</button>
             </div>
-        </div>
+        </aside>
 
-        <div class="container mx-auto p-4 sm:p-6 lg:p-8">
-            <header class="mb-8">
-                <h1 class="text-4xl font-extrabold text-gray-800 tracking-tight">Outil de devis/bon de commande (Autonome)</h1>
-                <p class="mt-2 text-lg text-gray-500">Créez, modifiez et gérez les commandes de vos clients en local.</p>
-            </header>
-
-            <main class="space-y-8">
-
-                 <div class="bg-white p-6 rounded-xl shadow-lg">
-                     <div id="main-tabs-container" class="flex border-b border-gray-200">
-                         <button data-tab-id="order-creation" class="main-tab-btn py-2 px-4 -mb-px font-medium text-sm border-b-2 border-indigo-500 text-indigo-600">Création de Commande</button>
-                         <button data-tab-id="saved-orders" class="main-tab-btn py-2 px-4 -mb-px font-medium text-sm text-gray-500 hover:text-gray-700">Commandes Sauvegardées</button>
-                     </div>
-
-                     <div id="order-creation" class="main-tab-content active mt-6 space-y-8">
-                         <section>
-                             <h2 class="text-2xl font-bold text-gray-800 border-b pb-3 mb-6">Informations sur la commande</h2>
-                             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                 <div>
-                                     <label class="block text-sm font-medium text-gray-700">Type de Document</label>
-                                     <div class="mt-2 flex items-center space-x-4">
-                                         <div class="flex items-center">
-                                             <input id="doc-type-order" name="doc-type" type="radio" value="order" checked>
-                                             <label for="doc-type-order" class="ml-2 block text-sm text-gray-900">Commande</label>
-                                         </div>
-                                         <div class="flex items-center">
-                                             <input id="doc-type-quote" name="doc-type" type="radio" value="quote">
-                                             <label for="doc-type-quote" class="ml-2 block text-sm text-gray-900">Devis</label>
-                                         </div>
-                                     </div>
-                                 </div>
-                                 <div id="order-scope-container">
-                                     <label class="block text-sm font-medium text-gray-700">Type de saisie</label>
-                                     <div class="mt-2 flex items-center space-x-4">
-                                         <div class="flex items-center">
-                                             <input id="scope-global" name="scope" type="radio" value="global" checked>
-                                             <label for="scope-global" class="ml-2 block text-sm text-gray-900">Globale</label>
-                                         </div>
-                                         <div class="flex items-center">
-                                             <input id="scope-licensee" name="scope" type="radio" value="licensee">
-                                             <label for="scope-licensee" class="ml-2 block text-sm text-gray-900">Par licencié</label>
-                                         </div>
-                                     </div>
-                                 </div>
-                                  <div>
-                                     <label class="block text-sm font-medium text-gray-700">Options de Commande</label>
-                                      <div class="mt-2 space-y-2">
-                                         <div class="flex items-center">
-                                             <input id="doc-type-reassort" type="checkbox" class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
-                                             <label for="doc-type-reassort" class="ml-2 block text-sm text-gray-900">Réassort 2 mois</label>
-                                         </div>
-                                         <div class="flex items-center">
-                                             <input id="custom-design-order-check" type="checkbox" class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
-                                             <label for="custom-design-order-check" class="ml-2 block text-sm text-gray-900">Commande création personnalisée</label>
-                                         </div>
-                                         <div class="flex items-center">
-                                             <input id="store-order-check" type="checkbox" class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
-                                             <label for="store-order-check" class="ml-2 block text-sm text-gray-900">Commande Magasin</label>
-                                         </div>
-                                     </div>
-                                 </div>
-                                 <div>
-                                     <label for="clubName" class="block text-sm font-medium text-gray-700">Nom du Club <span class="text-red-500">*</span></label>
-                                     <input type="text" id="clubName" list="club-list" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
-                                     <datalist id="club-list"></datalist>
-                                 </div>
-                                 <div>
-                                     <label for="departement" class="block text-sm font-medium text-gray-700">Département <span class="text-red-500">*</span></label>
-                                     <input type="text" id="departement" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
-                                 </div>
-                                 <div>
-                                     <label for="clientNumber" class="block text-sm font-medium text-gray-700">N° Client <span class="text-red-500">*</span></label>
-                                     <input type="text" id="clientNumber" list="client-list" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
-                                      <datalist id="client-list"></datalist>
-                                 </div>
-                                 <div id="pre-order-number-container">
-                                     <label for="preOrderNumber" class="block text-sm font-medium text-gray-700">N° Pré-commande</label>
-                                     <input type="text" id="preOrderNumber" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
-                                 </div>
-                                 <div id="quote-number-container" class="hidden">
-                                     <label for="quoteNumber" class="block text-sm font-medium text-gray-700">N° Devis</label>
-                                     <input type="text" id="quoteNumber" readonly class="mt-1 block w-full rounded-md border-gray-300 shadow-sm bg-gray-100">
-                                 </div>
-                                 <div>
-                                     <label for="orderDate" class="block text-sm font-medium text-gray-700">Date</label>
-                                     <input type="date" id="orderDate" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
-                                 </div>
-                                  <div id="licencieName-container" class="hidden">
-                                     <label for="licencieName" class="block text-sm font-medium text-gray-700">Nom du licencié</label>
-                                     <input type="text" id="licencieName" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
-                                 </div>
-                                 <div>
-                                     <label class="block text-sm font-medium text-gray-700">Remise</label>
-                                     <div class="mt-2 flex items-center">
-                                         <input id="apply-discount-check" type="checkbox" class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
-                                         <label for="apply-discount-check" class="ml-2 block text-sm text-gray-900">Application d'une remise</label>
-                                     </div>
-                                 </div>
-                                 <div class="md:col-span-2">
-                                     <label for="orderSpecificity" class="block text-sm font-medium text-gray-700">Spécificité Commande</label>
-                                      <textarea id="orderSpecificity" rows="1" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm" placeholder="Notes générales sur la commande..."></textarea>
-                                 </div>
-                                 <div class="lg:col-span-3">
-                                     <div class="flex items-center">
-                                         <input id="imperatif-check" type="checkbox" class="h-4 w-4 rounded border-gray-300 text-red-600 focus:ring-red-500">
-                                         <label for="imperatif-check" class="ml-2 block text-sm font-bold text-red-600">Impératif</label>
-                                     </div>
-                                     <div id="imperatif-note-container" class="hidden mt-2">
-                                         <label for="imperatif-note" class="block text-sm font-medium text-gray-700">Préciser l'impératif</label>
-                                         <textarea id="imperatif-note" rows="2" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm" placeholder="Ex: Doit être livré avant le JJ/MM/AAAA pour l'événement X..."></textarea>
-                                     </div>
-                                 </div>
-                             </div>
-                         </section>
-                        
-                         <section>
-                             <h2 class="text-2xl font-bold text-gray-800 border-b pb-3 mb-6">Ajouter un Article</h2>
-                             <div id="product-tabs-container" class="flex border-b border-gray-200">
-                                 <button data-tab="CYCLISME/RUNNING" class="product-tab-btn py-2 px-4 -mb-px font-medium text-sm border-b-2 border-indigo-500 text-indigo-600">CYCLISME/RUNNING</button>
-                                 <button data-tab="Accessoires" class="product-tab-btn py-2 px-4 -mb-px font-medium text-sm text-gray-500 hover:text-gray-700">Accessoires</button>
-                                 <button data-tab="GAMME ENFANTS" class="product-tab-btn py-2 px-4 -mb-px font-medium text-sm text-gray-500 hover:text-gray-700">GAMME ENFANTS</button>
-                             </div>
-                             <div id="product-form-container" class="pt-6">
-                                 <!-- Product form will be rendered here by JS -->
-                             </div>
-                         </section>
-
-                         <section>
-                             <div class="flex justify-between items-center border-b pb-3 mb-6">
-                                 <h2 class="text-2xl font-bold text-gray-800">Détails du devis/bon de commande</h2>
-                                 <span id="total-articles-display" class="text-lg font-semibold text-gray-600">Total des articles : 0</span>
-                             </div>
-                             <div class="overflow-x-auto">
-                                 <table class="min-w-full divide-y divide-gray-200">
-                                     <thead id="order-table-head" class="bg-gray-50">
-                                         <!-- Table head will be rendered here by JS -->
-                                         </thead>
-                                     <tbody id="order-table-body" class="bg-white divide-y divide-gray-200">
-                                         <tr><td colSpan="8" class="px-6 py-12 text-center text-gray-500">Aucun article dans le devis.</td></tr>
-                                     </tbody>
-                                 </table>
-                             </div>
-                         </section>
-                        
-                         <section>
-                              <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
-                                   <div id="discount-controls-container" class="hidden">
-                                     <label class="block text-sm font-medium text-gray-700">Type de remise</label>
-                                     <div class="mt-2 flex items-center space-x-4">
-                                          <div class="flex items-center">
-                                             <input id="discount-global" name="discount-type" type="radio" value="global" checked>
-                                             <label for="discount-global" class="ml-2 block text-sm text-gray-900">Globale</label>
-                                          </div>
-                                          <div class="flex items-center">
-                                             <input id="discount-item" name="discount-type" type="radio" value="item">
-                                             <label for="discount-item" class="ml-2 block text-sm text-gray-900">Par article</label>
-                                          </div>
-                                     </div>
-                                     <label for="clubDiscount" class="block text-sm font-medium text-gray-700 mt-4">Remise Club (%)</label>
-                                     <input type="number" id="clubDiscount" value="0" class="mt-1 block w-full md:w-1/2 rounded-md border-gray-300 shadow-sm" placeholder="0">
-                                   </div>
-                                 <div class="space-y-2 text-right md:col-start-2">
-                                     <div class="text-md"><span class="font-medium text-gray-600">Sous-total HT: </span><span id="subtotal-ht" class="font-semibold text-gray-800">0.00€</span></div>
-                                     <div class="text-md"><span class="font-medium text-gray-600">Sous-total TTC: </span><span id="subtotal-ttc" class="font-semibold text-gray-800">0.00€</span></div>
-                                     <div class="text-md text-red-600"><span class="font-medium">Remise Club HT (Information): </span><span id="discount-amount-ht" class="font-semibold">-0.00€</span></div>
-                                     <div class="text-md text-red-600"><span class="font-medium">Remise Club TTC (Information): </span><span id="discount-amount-ttc" class="font-semibold">-0.00€</span></div>
-                                     <div class="text-md hidden" id="graphic-fee-ht-row"><span class="font-medium text-gray-600">Frais création graphique HT: </span><span id="graphic-design-fee-ht" class="font-semibold text-gray-800">0.00€</span></div>
-                                     <div class="text-md hidden" id="graphic-fee-ttc-row"><span class="font-medium text-gray-600">Frais création graphique TTC: </span><span id="graphic-design-fee-ttc" class="font-semibold text-gray-800">0.00€</span></div>
-                                     <div class="text-md border-t pt-2 mt-2"><span class="font-medium text-gray-600">Frais de port HT: </span><span id="shipping-ht" class="font-semibold text-gray-800">0.00€</span></div>
-                                     <div class="text-md"><span class="font-medium text-gray-600">Frais de port TTC: </span><span id="shipping-ttc" class="font-semibold text-gray-800">0.00€</span></div>
-                                     <div class="text-xl mt-4"><span class="font-bold text-gray-700">Total Général HT: </span><span id="grand-total-ht" class="font-extrabold text-indigo-600">0.00€</span></div>
-                                     <div class="text-2xl"><span class="font-bold text-gray-700">Total Général TTC: </span><span id="grand-total-ttc" class="font-extrabold text-indigo-600">0.00€</span></div>
-                                     <div class="text-xl mt-2 font-bold text-green-600"><span id="down-payment-label" class="font-bold text-gray-700">Acompte à verser (30%): </span><span id="down-payment">0.00€</span></div>
-                                 </div>
-                                 </div>
-                              <div class="mt-8 pt-6 border-t flex flex-col sm:flex-row justify-between items-center gap-4">
-                                   <button id="new-order-btn" class="w-full sm:w-auto px-6 py-3 border border-red-500 text-base font-medium rounded-md text-red-500 bg-white hover:bg-red-50">Nouvelle Commande</button>
-                                   <div class="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
-                                       <button id="export-pdf-btn" class="w-full sm:w-auto px-6 py-3 border border-red-600 text-base font-medium rounded-md text-red-700 bg-white hover:bg-red-50 disabled:bg-gray-200 disabled:cursor-not-allowed">Exporter en PDF</button>
-                                       <button id="export-excel-btn" class="w-full sm:w-auto px-6 py-3 border border-green-600 text-base font-medium rounded-md text-green-700 bg-white hover:bg-green-50 disabled:bg-gray-200 disabled:cursor-not-allowed">Exporter en Excel</button>
-                                       <button id="send-email-btn" class="w-full sm:w-auto inline-flex justify-center px-6 py-3 border border-blue-600 text-base font-medium rounded-md text-blue-700 bg-white hover:bg-blue-50 disabled:bg-gray-200 disabled:cursor-not-allowed">Envoyer par Mail</button>
-                                       <button id="save-order-btn" class="w-full sm:w-auto inline-flex justify-center items-center px-8 py-3 border border-transparent text-base font-bold rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-300">Sauvegarder la Commande</button>
-                                   </div>
-                                 </div>
-                         </section>
-                     </div>
-                      <div id="saved-orders" class="main-tab-content mt-6">
-                          <div class="flex justify-between items-center border-b pb-3 mb-6">
-                              <h2 class="text-2xl font-bold text-gray-800">Commandes Sauvegardées</h2>
-                              <div class="flex gap-2">
-                                  <button id="import-orders-json-btn" class="px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700">Charger .json</button>
-                                  <button id="export-orders-json-btn" class="px-4 py-2 text-sm font-medium text-white bg-purple-600 rounded-lg hover:bg-purple-700">Exporter .json</button>
-                                  <input type="file" id="json-orders-file-input" class="hidden" accept=".json">
-                              </div>
-                          </div>
-                          <div id="saved-orders-list" class="space-y-4">
-                              <!-- Saved orders will be rendered here by JS -->
-                          </div>
-                      </div>
-                 </div>
-
-                
-            </main>
-        </div>
+        <!-- Main Content -->
+        <main class="flex-1 p-8 overflow-y-auto bg-slate-50">
+            <div id="product-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                 <div id="product-placeholder" class="col-span-full text-center py-24 text-gray-500">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                    </svg>
+                    <h3 class="mt-2 text-sm font-medium text-gray-900">Bienvenue sur l'outil interactif Noret</h3>
+                    <p class="mt-1 text-sm text-gray-500">Utilisez le menu de gauche pour commencer à construire votre document.</p>
+                  </div>
+            </div>
+        </main>
     </div>
 
-    <script type="module">
-        // --- DATA ---
-        const allAvailableProducts = [
-            // This is a very large array, so it's truncated for brevity in this comment.
-            // In the final code, the full array from the React component is used.
-             // =========== CYCLISME ===========
-            { name: 'MAILLOT CLASSIQUE HOMME CONFORT MC', category: 'CYCLISME', type: 'haut', subtype: 'Maillots Manches Courtes', pricingGroup: 'maillotClassiqueMC', pricingTiers: [ { quantity: 1, price: 86.10 }, { quantity: 2, price: 73.80 }, { quantity: 3, price: 61.50 }, { quantity: 5, price: 49.20 }, { quantity: 15, price: 46.74 }, { quantity: 25, price: 45.26 }, { quantity: 50, price: 44.28 }, { quantity: 80, price: 42.80 }, { quantity: 150, price: 41.82 } ] },
-            { name: 'MAILLOT CLASSIQUE FEMME CONFORT MC', category: 'CYCLISME', type: 'haut', subtype: 'Maillots Manches Courtes', pricingGroup: 'maillotClassiqueMC', pricingTiers: [ { quantity: 1, price: 86.10 }, { quantity: 2, price: 73.80 }, { quantity: 3, price: 61.50 }, { quantity: 5, price: 49.20 }, { quantity: 15, price: 46.74 }, { quantity: 25, price: 45.26 }, { quantity: 50, price: 44.28 }, { quantity: 80, price: 42.80 }, { quantity: 150, price: 41.82 } ] },
-            { name: 'MAILLOT MIXTE CONFORT SANS MANCHE', category: 'CYCLISME', type: 'haut', subtype: 'Maillots Manches Courtes', pricingTiers: [ { quantity: 1, price: 86.10 }, { quantity: 2, price: 73.80 }, { quantity: 3, price: 61.50 }, { quantity: 5, price: 49.20 }, { quantity: 15, price: 46.74 }, { quantity: 25, price: 45.26 }, { quantity: 50, price: 44.28 }, { quantity: 80, price: 42.80 }, { quantity: 150, price: 41.82 } ] },
-            { name: 'MAILLOT MIXTE PERFORMANCE MC', category: 'CYCLISME', type: 'haut', subtype: 'Maillots Manches Courtes', pricingTiers: [ { quantity: 1, price: 89.25 }, { quantity: 2, price: 76.50 }, { quantity: 3, price: 63.75 }, { quantity: 5, price: 51.00 }, { quantity: 15, price: 48.45 }, { quantity: 25, price: 46.92 }, { quantity: 50, price: 45.90 }, { quantity: 80, price: 44.37 }, { quantity: 150, price: 43.35 } ] },
-            { name: 'MAILLOT MIXTE VTT CONFORT MC', category: 'CYCLISME', type: 'haut', subtype: 'Maillots Manches Courtes', pricingTiers: [ { quantity: 1, price: 89.25 }, { quantity: 2, price: 76.50 }, { quantity: 3, price: 63.75 }, { quantity: 5, price: 51.00 }, { quantity: 15, price: 48.45 }, { quantity: 25, price: 46.92 }, { quantity: 50, price: 45.90 }, { quantity: 80, price: 44.37 }, { quantity: 150, price: 43.35 } ] },
-            { name: 'MAILLOT VTT/DESCENTE MIXTE CONFORT MC (Très ample)', category: 'CYCLISME', type: 'haut', subtype: 'Maillots Manches Courtes', sizeType: 'largeHaut', hasOptions: false, pricingTiers: [ { quantity: 1, price: 77.70 }, { quantity: 2, price: 66.60 }, { quantity: 3, price: 55.50 }, { quantity: 5, price: 44.40 }, { quantity: 15, price: 42.18 }, { quantity: 25, price: 40.85 }, { quantity: 50, price: 39.96 }, { quantity: 80, price: 38.63 }, { quantity: 150, price: 37.74 } ] },
-            { name: 'MAILLOT MIXTE AERO MC', category: 'CYCLISME', type: 'haut', subtype: 'Maillots Manches Courtes', sizeType: 'aero', pricingTiers: [ { quantity: 1, price: 96.60 }, { quantity: 2, price: 82.80 }, { quantity: 3, price: 69.00 }, { quantity: 5, price: 55.20 }, { quantity: 15, price: 52.44 }, { quantity: 25, price: 50.78 }, { quantity: 50, price: 49.68 }, { quantity: 80, price: 48.02 }, { quantity: 150, price: 46.92 } ] },
-            { name: 'MAILLOT MI-SAISON HOMME CONFORT ML', category: 'CYCLISME', type: 'haut', subtype: 'Maillots Manches Longues', pricingGroup: 'maillotMiSaisonML', pricingTiers: [ { quantity: 1, price: 101.85 }, { quantity: 2, price: 87.30 }, { quantity: 3, price: 72.75 }, { quantity: 5, price: 58.20 }, { quantity: 15, price: 55.29 }, { quantity: 25, price: 53.54 }, { quantity: 50, price: 52.38 }, { quantity: 80, price: 50.63 }, { quantity: 150, price: 49.47 } ] },
-            { name: 'MAILLOT MI-SAISON FEMME CONFORT ML', category: 'CYCLISME', type: 'haut', subtype: 'Maillots Manches Longues', pricingGroup: 'maillotMiSaisonML', pricingTiers: [ { quantity: 1, price: 101.85 }, { quantity: 2, price: 87.30 }, { quantity: 3, price: 72.75 }, { quantity: 5, price: 58.20 }, { quantity: 15, price: 55.29 }, { quantity: 25, price: 53.54 }, { quantity: 50, price: 52.38 }, { quantity: 80, price: 50.63 }, { quantity: 150, price: 49.47 } ] },
-            { name: 'MAILLOT BMX MIXTE CONFORT ML (Très ample)', category: 'CYCLISME', type: 'haut', subtype: 'Maillots Manches Longues', sizeType: 'largeHaut', hasOptions: false, pricingTiers: [ { quantity: 1, price: 88.20 }, { quantity: 2, price: 75.60 }, { quantity: 3, price: 63.00 }, { quantity: 5, price: 50.40 }, { quantity: 15, price: 47.88 }, { quantity: 25, price: 46.37 }, { quantity: 50, price: 45.36 }, { quantity: 80, price: 43.85 }, { quantity: 150, price: 42.84 } ] },
-            { name: 'MAILLOT MI-SAISON MIXTE AERO ML', category: 'CYCLISME', type: 'haut', subtype: 'Maillots Manches Longues', sizeType: 'aero', pricingTiers: [ { quantity: 1, price: 107.10 }, { quantity: 2, price: 91.80 }, { quantity: 3, price: 76.50 }, { quantity: 5, price: 61.20 }, { quantity: 15, price: 58.14 }, { quantity: 25, price: 56.30 }, { quantity: 50, price: 55.08 }, { quantity: 80, price: 53.24 }, { quantity: 150, price: 52.02 } ] },
-            
-            { name: 'MAILLOT PLUIE MIXTE AERO MC (non sublimé, marquage DTF)', category: 'CYCLISME', type: 'haut', subtype: 'Essentiels et Vestes', pricingTiers: [ { quantity: 1, price: 149.10 }, { quantity: 2, price: 127.80 }, { quantity: 3, price: 106.50 }, { quantity: 5, price: 85.20 }, { quantity: 15, price: 80.94 }, { quantity: 25, price: 78.38 }, { quantity: 50, price: 76.68 }, { quantity: 80, price: 74.12 }, { quantity: 150, price: 72.42 } ] },
-            { name: 'MAILLOT PLUIE MIXTE AERO ML (non sublimé, marquage DTF)', category: 'CYCLISME', type: 'haut', subtype: 'Essentiels et Vestes', pricingTiers: [ { quantity: 1, price: 178.50 }, { quantity: 2, price: 153.00 }, { quantity: 3, price: 127.50 }, { quantity: 5, price: 102.00 }, { quantity: 15, price: 96.90 }, { quantity: 25, price: 93.84 }, { quantity: 50, price: 91.80 }, { quantity: 80, price: 88.74 }, { quantity: 150, price: 86.70 } ] },
-            { name: 'GILET COUPE-VENT LEGER MIXTE (vent et pluie fine, sans poche dos)', category: 'CYCLISME', type: 'haut', subtype: 'Essentiels et Vestes', pricingGroup: 'giletCoupeVent', excludedOptions: ['POCHE DOS ZIPPEE'], pricingTiers: [ { quantity: 1, price: 79.80 }, { quantity: 2, price: 68.40 }, { quantity: 3, price: 57.00 }, { quantity: 5, price: 45.60 }, { quantity: 15, price: 43.32 }, { quantity: 25, price: 41.95 }, { quantity: 50, price: 41.04 }, { quantity: 80, price: 39.67 }, { quantity: 150, price: 38.76 } ] },
-            { name: 'GILET COUPE-VENT MI-SAISON MIXTE (dos ajouré)', category: 'CYCLISME', type: 'haut', subtype: 'Essentiels et Vestes', pricingGroup: 'giletCoupeVent', excludedOptions: ['POCHE DOS ZIPPEE'], pricingTiers: [ { quantity: 1, price: 98.70 }, { quantity: 2, price: 84.60 }, { quantity: 3, price: 70.50 }, { quantity: 5, price: 56.40 }, { quantity: 15, price: 53.58 }, { quantity: 25, price: 51.89 }, { quantity: 50, price: 50.76 }, { quantity: 80, price: 49.07 }, { quantity: 150, price: 47.94 } ] },
-            { name: 'GILET COUPE-VENT HIVER MIXTE (tout membranné)', category: 'CYCLISME', type: 'haut', subtype: 'Essentiels et Vestes', pricingGroup: 'giletCoupeVent', excludedOptions: ['POCHE DOS ZIPPEE'], pricingTiers: [ { quantity: 1, price: 105.00 }, { quantity: 2, price: 90.00 }, { quantity: 3, price: 75.00 }, { quantity: 5, price: 60.00 }, { quantity: 15, price: 57.00 }, { quantity: 25, price: 55.20 }, { quantity: 50, price: 54.00 }, { quantity: 80, price: 52.20 }, { quantity: 150, price: 51.00 } ] },
-            { name: 'COUPE-VENT LEGER MIXTE CONFORT (vent et pluie fine)', category: 'CYCLISME', type: 'haut', subtype: 'Essentiels et Vestes', pricingGroup: 'coupeVent', pricingTiers: [ { quantity: 1, price: 96.60 }, { quantity: 2, price: 82.80 }, { quantity: 3, price: 69.00 }, { quantity: 5, price: 55.20 }, { quantity: 15, price: 52.44 }, { quantity: 25, price: 50.78 }, { quantity: 50, price: 49.68 }, { quantity: 80, price: 48.02 }, { quantity: 150, price: 46.92 } ] },
-            { name: 'COUPE-VENT LEGER DEPERLANT MIXTE CONFORT (avec membranne)', category: 'CYCLISME', type: 'haut', subtype: 'Essentiels et Vestes', pricingGroup: 'coupeVent', pricingTiers: [ { quantity: 1, price: 128.10 }, { quantity: 2, price: 109.80 }, { quantity: 3, price: 91.50 }, { quantity: 5, price: 73.20 }, { quantity: 15, price: 69.54 }, { quantity: 25, price: 67.34 }, { quantity: 50, price: 65.88 }, { quantity: 80, price: 63.68 }, { quantity: 150, price: 62.22 } ] },
-            { name: 'VESTE MI-SAISON MIXTE CONFORT (membranne coupe-vent + mi-saison)', category: 'CYCLISME', type: 'haut', subtype: 'Essentiels et Vestes', pricingGroup: 'vesteMiSaison', pricingTiers: [ { quantity: 1, price: 136.50 }, { quantity: 2, price: 117.00 }, { quantity: 3, price: 97.50 }, { quantity: 5, price: 78.00 }, { quantity: 15, price: 74.10 }, { quantity: 25, price: 71.76 }, { quantity: 50, price: 70.20 }, { quantity: 80, price: 67.86 }, { quantity: 150, price: 66.30 } ] },
+    <!-- Summary Bar -->
+    <div id="summary-bar" class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 shadow-2xl" style="display: none;">
+        <!-- Summary will be injected here -->
+    </div>
+    
+    <!-- Product Card Template -->
+    <template id="product-card-template">
+        <div class="product-card bg-white rounded-xl shadow-md hover:shadow-xl p-5 flex flex-col relative overflow-hidden">
+            <span class="group-color-indicator absolute top-0 left-0 h-full w-1.5" style="display: none;"></span>
+             <button class="remove-product-btn absolute top-2 right-2 text-gray-400 hover:text-red-500 rounded-full p-1 transition-colors">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+            </button>
+            <p class="product-category text-xs font-semibold text-indigo-500 uppercase tracking-wide"></p>
+            <h4 class="product-name text-md font-bold text-gray-800 mt-1"></h4>
+            <div class="product-links flex flex-col items-start mt-1"></div>
+            <div class="product-group-info text-xs text-gray-500 mt-2 p-2 bg-slate-50 rounded-md" style="display: none;"></div>
 
-            { name: 'VESTE MI-SAISON MIXTE CONFORT avec -6cm aux ML', category: 'CYCLISME', type: 'haut', subtype: 'Essentiels et Vestes', pricingGroup: 'vesteMiSaison', pricingTiers: [ { quantity: 1, price: 136.50 }, { quantity: 2, price: 117.00 }, { quantity: 3, price: 97.50 }, { quantity: 5, price: 78.00 }, { quantity: 15, price: 74.10 }, { quantity: 25, price: 71.76 }, { quantity: 50, price: 70.20 }, { quantity: 80, price: 67.86 }, { quantity: 150, price: 66.30 } ] },
-            { name: 'VESTE HIVER HOMME CONFORT', category: 'CYCLISME', type: 'haut', subtype: 'Essentiels et Vestes', pricingGroup: 'vesteHiverConfort', pricingTiers: [ { quantity: 1, price: 163.80 }, { quantity: 2, price: 140.40 }, { quantity: 3, price: 117.00 }, { quantity: 5, price: 93.60 }, { quantity: 15, price: 88.92 }, { quantity: 25, price: 86.11 }, { quantity: 50, price: 84.24 }, { quantity: 80, price: 81.43 }, { quantity: 150, price: 79.56 } ] },
-            { name: 'VESTE HIVER FEMME CONFORT', category: 'CYCLISME', type: 'haut', subtype: 'Essentiels et Vestes', pricingGroup: 'vesteHiverConfort', pricingTiers: [ { quantity: 1, price: 163.80 }, { quantity: 2, price: 140.40 }, { quantity: 3, price: 117.00 }, { quantity: 5, price: 93.60 }, { quantity: 15, price: 88.92 }, { quantity: 25, price: 86.11 }, { quantity: 50, price: 84.24 }, { quantity: 80, price: 81.43 }, { quantity: 150, price: 79.56 } ] },
-            { name: 'VESTE HIVER THERMIQUE HOMME CONFORT', category: 'CYCLISME', type: 'haut', subtype: 'Essentiels et Vestes', pricingGroup: 'vesteHiverThermique', pricingTiers: [ { quantity: 1, price: 168.00 }, { quantity: 2, price: 144.00 }, { quantity: 3, price: 120.00 }, { quantity: 5, price: 96.00 }, { quantity: 15, price: 91.20 }, { quantity: 25, price: 88.32 }, { quantity: 50, price: 86.40 }, { quantity: 80, price: 83.52 }, { quantity: 150, price: 81.60 } ] },
-            { name: 'VESTE HIVER THERMIQUE FEMME CONFORT', category: 'CYCLISME', type: 'haut', subtype: 'Essentiels et Vestes', pricingGroup: 'vesteHiverThermique', pricingTiers: [ { quantity: 1, price: 168.00 }, { quantity: 2, price: 144.00 }, { quantity: 3, price: 120.00 }, { quantity: 5, price: 96.00 }, { quantity: 15, price: 91.20 }, { quantity: 25, price: 88.32 }, { quantity: 50, price: 86.40 }, { quantity: 80, price: 83.52 }, { quantity: 150, price: 81.60 } ] },
-            // --- Cuissards Courts ---
-            { name: 'CUISSARD A BRETELLES HOMME CONFORT Peau LANDSCAPE', category: 'CYCLISME', type: 'haut', subtype: 'Cuissards Courts', isCuissardOrCollant: true, pricingGroup: 'cuissardConfortLandscape', pricingTiers: [ { quantity: 1, price: 121.80 }, { quantity: 2, price: 104.40 }, { quantity: 3, price: 87.00 }, { quantity: 5, price: 69.60 }, { quantity: 15, price: 66.12 }, { quantity: 25, price: 64.03 }, { quantity: 50, price: 62.64 }, { quantity: 80, price: 60.55 }, { quantity: 150, price: 59.16 }, ] },
-            { name: 'CUISSARD A BRETELLES FEMME CONFORT Peau LANDSCAPE', category: 'CYCLISME', type: 'haut', subtype: 'Cuissards Courts', isCuissardOrCollant: true, pricingGroup: 'cuissardConfortLandscape', pricingTiers: [ { quantity: 1, price: 121.80 }, { quantity: 2, price: 104.40 }, { quantity: 3, price: 87.00 }, { quantity: 5, price: 69.60 }, { quantity: 15, price: 66.12 }, { quantity: 25, price: 64.03 }, { quantity: 50, price: 62.64 }, { quantity: 80, price: 60.55 }, { quantity: 150, price: 59.16 }, ] },
-            { name: 'CUISSARD FEMME SANS BRETELLES CONFORT Peau LANDSCAPE', category: 'CYCLISME', type: 'haut', subtype: 'Cuissards Courts', isCuissardOrCollant: true, pricingGroup: 'cuissardConfortLandscape', pricingTiers: [ { quantity: 1, price: 117.60 }, { quantity: 2, price: 100.80 }, { quantity: 3, price: 84.00 }, { quantity: 5, price: 67.20 }, { quantity: 15, price: 63.84 }, { quantity: 25, price: 61.82 }, { quantity: 50, price: 60.48 }, { quantity: 80, price: 58.46 }, { quantity: 150, price: 57.12 }, ] },
-            { name: 'CUISSARD HOMME AERO Peau CERVINO', category: 'CYCLISME', type: 'haut', subtype: 'Cuissards Courts', sizeType: 'aero', isCuissardOrCollant: true, pricingGroup: 'cuissardAeroCervino', pricingTiers: [ { quantity: 1, price: 142.80 }, { quantity: 2, price: 122.40 }, { quantity: 3, price: 102.00 }, { quantity: 5, price: 81.60 }, { quantity: 15, price: 77.52 }, { quantity: 25, price: 75.07 }, { quantity: 50, price: 73.44 }, { quantity: 80, price: 70.99 }, { quantity: 150, price: 69.36 }, ] },
-            { name: 'CUISSARD FEMME AERO Peau CERVINO', category: 'CYCLISME', type: 'haut', subtype: 'Cuissards Courts', sizeType: 'aero', isCuissardOrCollant: true, pricingGroup: 'cuissardAeroCervino', pricingTiers: [ { quantity: 1, price: 142.80 }, { quantity: 2, price: 122.40 }, { quantity: 3, price: 102.00 }, { quantity: 5, price: 81.60 }, { quantity: 15, price: 77.52 }, { quantity: 25, price: 75.07 }, { quantity: 50, price: 73.44 }, { quantity: 80, price: 70.99 }, { quantity: 150, price: 69.36 }, ] },
-            { name: 'SHORT VTT FOND Peau ENDURANCE 2.5', category: 'CYCLISME', type: 'haut', subtype: 'Cuissards Courts', isCuissardOrCollant: true, pricingTiers: [ { quantity: 1, price: 75.00 } ] },
-            // --- Corsaires/Collants ---
-            { name: 'CORSAIRE HOMME A BRETELLES CONFORT Peau LANDSCAPE', category: 'CYCLISME', type: 'haut', subtype: 'Corsaires/Collants', sizeType: 'ample', isCuissardOrCollant: true, pricingGroup: 'corsaireConfortLandscape', pricingTiers: [ { quantity: 1, price: 98.70 } ] },
-            { name: 'CORSAIRE FEMME SANS BRETELLES CONFORT Peau LANDSCAPE', category: 'CYCLISME', type: 'haut', subtype: 'Corsaires/Collants', sizeType: 'ample', isCuissardOrCollant: true, pricingGroup: 'corsaireConfortLandscape', pricingTiers: [ { quantity: 1, price: 95.70 } ] },
-            { name: 'COLLANT HIVER A BRETELLES HOMME CONFORT Peau LANDSCAPE', category: 'CYCLISME', type: 'haut', subtype: 'Corsaires/Collants', sizeType: 'ample', isCuissardOrCollant: true, pricingGroup: 'collantHiverConfortLandscape', pricingTiers: [ { quantity: 1, price: 138.60 }, { quantity: 2, price: 118.80 }, { quantity: 3, price: 99.00 }, { quantity: 5, price: 79.20 }, { quantity: 15, price: 75.24 }, { quantity: 25, price: 72.86 }, { quantity: 50, price: 71.28 }, { quantity: 80, price: 68.90 }, { quantity: 150, price: 67.32 }, ] },
-            { name: 'COLLANT HIVER A BRETELLES FEMME CONFORT Peau LANDSCAPE', category: 'CYCLISME', type: 'haut', subtype: 'Corsaires/Collants', sizeType: 'ample', isCuissardOrCollant: true, pricingGroup: 'collantHiverConfortLandscape', pricingTiers: [ { quantity: 1, price: 138.60 }, { quantity: 2, price: 118.80 }, { quantity: 3, price: 99.00 }, { quantity: 5, price: 79.20 }, { quantity: 15, price: 75.24 }, { quantity: 25, price: 72.86 }, { quantity: 50, price: 71.28 }, { quantity: 80, price: 68.90 }, { quantity: 150, price: 67.32 }, ] },
-            { name: 'COLLANT HIVER FEMME SANS BRETELLES CONFORT Peau LANDSCAPE', category: 'CYCLISME', type: 'haut', subtype: 'Corsaires/Collants', sizeType: 'ample', isCuissardOrCollant: true, pricingGroup: 'collantHiverConfortLandscape', pricingTiers: [ { quantity: 1, price: 134.40 }, { quantity: 2, price: 115.20 }, { quantity: 3, price: 96.00 }, { quantity: 5, price: 76.80 }, { quantity: 15, price: 72.96 }, { quantity: 25, price: 70.66 }, { quantity: 50, price: 69.12 }, { quantity: 80, price: 66.82 }, { quantity: 150, price: 65.28 }, ] },
-            { name: 'COLLANT HIVER HOMME AERO Peau CERVINO', category: 'CYCLISME', type: 'haut', subtype: 'Corsaires/Collants', pricingGroup: 'collantHiverAeroCervino', sizeType: 'aero', isCuissardOrCollant: true, pricingTiers: [ { quantity: 1, price: 165.90 }, { quantity: 2, price: 142.20 }, { quantity: 3, price: 118.50 }, { quantity: 5, price: 94.80 }, { quantity: 15, price: 90.06 }, { quantity: 25, price: 87.22 }, { quantity: 50, price: 85.32 }, { quantity: 80, price: 82.48 }, { quantity: 150, price: 80.58 }, ] },
-            { name: 'COLLANT HIVER FEMME AERO Peau CERVINO', category: 'CYCLISME', type: 'haut', subtype: 'Corsaires/Collants', pricingGroup: 'collantHiverAeroCervino', sizeType: 'aero', isCuissardOrCollant: true, pricingTiers: [ { quantity: 1, price: 165.90 }, { quantity: 2, price: 142.20 }, { quantity: 3, price: 118.50 }, { quantity: 5, price: 94.80 }, { quantity: 15, price: 90.06 }, { quantity: 25, price: 87.22 }, { quantity: 50, price: 85.32 }, { quantity: 80, price: 82.48 }, { quantity: 150, price: 80.58 }, ] },
-            { name: 'COLLANT MIXTE ECHAUFFEMENT', category: 'CYCLISME', type: 'haut', subtype: 'Corsaires/Collants', sizeType: 'ample', isCuissardOrCollant: true, pricingTiers: [ { quantity: 1, price: 98.70 }, { quantity: 2, price: 84.60 }, { quantity: 3, price: 70.50 }, { quantity: 5, price: 56.40 }, { quantity: 15, price: 53.58 }, { quantity: 25, price: 51.89 }, { quantity: 50, price: 50.76 }, { quantity: 80, price: 49.07 }, { quantity: 150, price: 47.94 }, ] },
-            // --- Combinaisons ---
-            { name: 'COMBINAISON ROUTE MANCHES COURTES HOMME AERO Peau CERVINO', category: 'CYCLISME', type: 'haut', subtype: 'Combinaisons', sizeType: 'aero', pricingTiers: [{ quantity: 1, price: 115.20 }] },
-            { name: 'COMBINAISON ROUTE MANCHES COURTES FEMME AERO Peau CERVINO', category: 'CYCLISME', type: 'haut', subtype: 'Combinaisons', sizeType: 'aero', pricingTiers: [{ quantity: 1, price: 115.20 }] },
-            { name: 'COMBINAISON CHRONO ROUTE MANCHES COURTES HOMME AERO Peau CERVINO', category: 'CYCLISME', type: 'haut', subtype: 'Combinaisons', sizeType: 'aero', pricingTiers: [{ quantity: 1, price: 115.20 }] },
-            { name: 'COMBINAISON CHRONO ROUTE MANCHES COURTES FEMME AERO Peau CERVINO', category: 'CYCLISME', type: 'haut', subtype: 'Combinaisons', sizeType: 'aero', pricingTiers: [{ quantity: 1, price: 115.20 }] },
-            { name: 'COMBINAISON CHRONO ROUTE MANCHES LONGUES HOMME AERO Peau CERVINO', category: 'CYCLISME', type: 'haut', subtype: 'Combinaisons', sizeType: 'aero', pricingTiers: [{ quantity: 1, price: 120.00 }] },
-            { name: 'COMBINAISON CHRONO ROUTE MANCHES LONGUES FEMME AERO Peau CERVINO', category: 'CYCLISME', type: 'haut', subtype: 'Combinaisons', sizeType: 'aero', pricingTiers: [{ quantity: 1, price: 120.00 }] },
-            { name: 'COMBINAISON CHRONO PISTE MANCHES COURTES HOMME AERO Peau CERVINO', category: 'CYCLISME', type: 'haut', subtype: 'Combinaisons', sizeType: 'aero', pricingTiers: [{ quantity: 1, price: 111.60 }] },
-            { name: 'COMBINAISON CHRONO PISTE MANCHES COURTES FEMME AERO Peau CERVINO', category: 'CYCLISME', type: 'haut', subtype: 'Combinaisons', sizeType: 'aero', pricingTiers: [{ quantity: 1, price: 111.60 }] },
-            { name: 'COMBINAISON CHRONO PISTE MANCHES LONGUES HOMME AERO Peau CERVINO', category: 'CYCLISME', type: 'haut', subtype: 'Combinaisons', sizeType: 'aero', pricingTiers: [{ quantity: 1, price: 116.40 }] },
-            { name: 'COMBINAISON CHRONO PISTE MANCHES LONGUES FEMME AERO Peau CERVINO', category: 'CYCLISME', type: 'haut', subtype: 'Combinaisons', sizeType: 'aero', pricingTiers: [{ quantity: 1, price: 111.60 }] },
-            { name: 'COMBINAISON CYCLO-CROSS MANCHES LONGUES HOMME AERO Peau CERVINO', category: 'CYCLISME', type: 'haut', subtype: 'Combinaisons', sizeType: 'aero', pricingTiers: [{ quantity: 1, price: 120.00 }] },
-            { name: 'COMBINAISON CYCLO-CROSSMANCHES LONGUES FEMME AERO Peau CERVINO', category: 'CYCLISME', type: 'haut', subtype: 'Combinaisons', sizeType: 'aero', pricingTiers: [{ quantity: 1, price: 120.00 }] },
-            
-            // =========== RUNNING ===========
-            // --- Hauts ---
-            { name: 'MAILLOT RUNNING HOMME', category: 'RUNNING', type: 'haut', subtype: 'Hauts', pricingGroup: 'maillotRunning', excludedOptions: ['POCHE DOS ZIPPEE'], pricingTiers: [ { quantity: 1, price: 63.00 }, { quantity: 2, price: 54.00 }, { quantity: 3, price: 45.00 }, { quantity: 5, price: 36.00 }, { quantity: 15, price: 34.20 }, { quantity: 25, price: 33.12 }, { quantity: 50, price: 32.40 }, { quantity: 80, price: 31.32 }, { quantity: 150, price: 30.60 } ] },
-            { name: 'MAILLOT RUNNING FEMME', category: 'RUNNING', type: 'haut', subtype: 'Hauts', pricingGroup: 'maillotRunning', excludedOptions: ['POCHE DOS ZIPPEE'], pricingTiers: [ { quantity: 1, price: 63.00 }, { quantity: 2, price: 54.00 }, { quantity: 3, price: 45.00 }, { quantity: 5, price: 36.00 }, { quantity: 15, price: 34.20 }, { quantity: 25, price: 33.12 }, { quantity: 50, price: 32.40 }, { quantity: 80, price: 31.32 }, { quantity: 150, price: 30.60 } ] },
-            { name: 'MAILLOT TRAIL HOMME MANCHES COURTES', category: 'RUNNING', type: 'haut', subtype: 'Hauts', pricingGroup: 'maillotTrail', excludedOptions: ['POCHE DOS ZIPPEE'], pricingTiers: [ { quantity: 1, price: 87.15 }, { quantity: 2, price: 74.70 }, { quantity: 3, price: 62.25 }, { quantity: 5, price: 49.80 }, { quantity: 15, price: 47.31 }, { quantity: 25, price: 45.82 }, { quantity: 50, price: 44.82 }, { quantity: 80, price: 43.33 }, { quantity: 150, price: 42.33 } ] },
-            { name: 'MAILLOT TRAIL FEMME MANCHES COURTES', category: 'RUNNING', type: 'haut', subtype: 'Hauts', pricingGroup: 'maillotTrail', excludedOptions: ['POCHE DOS ZIPPEE'], pricingTiers: [ { quantity: 1, price: 87.15 }, { quantity: 2, price: 74.70 }, { quantity: 3, price: 62.25 }, { quantity: 5, price: 49.80 }, { quantity: 15, price: 47.31 }, { quantity: 25, price: 45.82 }, { quantity: 50, price: 44.82 }, { quantity: 80, price: 43.33 }, { quantity: 150, price: 42.33 } ] },
-            { name: 'DEBARDEUR ATHLETISME HOMME', category: 'RUNNING', type: 'haut', subtype: 'Hauts', pricingGroup: 'debardeurAthletisme', excludedOptions: ['POCHE DOS ZIPPEE'], pricingTiers: [ { quantity: 1, price: 56.70 }, { quantity: 2, price: 48.60 }, { quantity: 3, price: 40.50 }, { quantity: 5, price: 32.40 }, { quantity: 15, price: 30.78 }, { quantity: 25, price: 29.81 }, { quantity: 50, price: 29.16 }, { quantity: 80, price: 28.19 }, { quantity: 150, price: 27.54 } ] },
-            { name: 'DEBARDEUR ATHLETISME FEMME', category: 'RUNNING', type: 'haut', subtype: 'Hauts', pricingGroup: 'debardeurAthletisme', excludedOptions: ['POCHE DOS ZIPPEE'], pricingTiers: [ { quantity: 1, price: 56.70 }, { quantity: 2, price: 48.60 }, { quantity: 3, price: 40.50 }, { quantity: 5, price: 32.40 }, { quantity: 15, price: 30.78 }, { quantity: 25, price: 29.81 }, { quantity: 50, price: 29.16 }, { quantity: 80, price: 28.19 }, { quantity: 150, price: 27.54 } ] },
-            { name: 'BRASSIERE RUNNING FEMME', category: 'RUNNING', type: 'haut', subtype: 'Hauts', hasOptions: false, pricingTiers: [ { quantity: 1, price: 68.25 }, { quantity: 2, price: 58.50 }, { quantity: 3, price: 48.75 }, { quantity: 5, price: 39.00 }, { quantity: 15, price: 37.05 }, { quantity: 25, price: 35.88 }, { quantity: 50, price: 35.10 }, { quantity: 80, price: 33.93 }, { quantity: 150, price: 33.15 } ] },
-            { name: 'MAILLOT RUNNING HIVER HOMME MANCHES LONGUES', category: 'RUNNING', type: 'haut', subtype: 'Hauts', pricingGroup: 'maillotRunningHiver', excludedOptions: ['POCHE DOS ZIPPEE'], pricingTiers: [ { quantity: 1, price: 94.50 }, { quantity: 2, price: 81.00 }, { quantity: 3, price: 67.50 }, { quantity: 5, price: 54.00 }, { quantity: 15, price: 51.30 }, { quantity: 25, price: 49.68 }, { quantity: 50, price: 48.60 }, { quantity: 80, price: 46.98 }, { quantity: 150, price: 45.90 } ] },
-            { name: 'MAILLOT RUNNING HIVER FEMME MANCHES LONGUES', category: 'RUNNING', type: 'haut', subtype: 'Hauts', pricingGroup: 'maillotRunningHiver', excludedOptions: ['POCHE DOS ZIPPEE'], pricingTiers: [ { quantity: 1, price: 94.50 }, { quantity: 2, price: 81.00 }, { quantity: 3, price: 67.50 }, { quantity: 5, price: 54.00 }, { quantity: 15, price: 51.30 }, { quantity: 25, price: 49.68 }, { quantity: 50, price: 48.60 }, { quantity: 80, price: 46.98 }, { quantity: 150, price: 45.90 } ] },
-            { name: 'GILET COUPE-VENT LEGER MIXTE', category: 'RUNNING', type: 'haut', subtype: 'Hauts', excludedOptions: ['POCHE DOS ZIPPEE'], pricingTiers: [ { quantity: 1, price: 79.80 }, { quantity: 2, price: 68.40 }, { quantity: 3, price: 57.00 }, { quantity: 5, price: 45.60 }, { quantity: 15, price: 43.32 }, { quantity: 25, price: 41.95 }, { quantity: 50, price: 41.04 }, { quantity: 80, price: 39.67 }, { quantity: 150, price: 38.76 } ] },
-            { name: 'GILET COUPE-VENT MI-SAISON MIXTE', category: 'RUNNING', type: 'haut', subtype: 'Hauts', excludedOptions: ['POCHE DOS ZIPPEE'], pricingTiers: [ { quantity: 1, price: 98.70 }, { quantity: 2, price: 84.60 }, { quantity: 3, price: 70.50 }, { quantity: 5, price: 56.40 }, { quantity: 15, price: 53.58 }, { quantity: 25, price: 51.89 }, { quantity: 50, price: 50.76 }, { quantity: 80, price: 49.07 }, { quantity: 150, price: 47.94 } ] },
-            { name: 'GILET COUPE-VENT HIVER MIXTE', category: 'RUNNING', type: 'haut', subtype: 'Hauts', excludedOptions: ['POCHE DOS ZIPPEE'], pricingTiers: [ { quantity: 1, price: 105.00 }, { quantity: 2, price: 90.00 }, { quantity: 3, price: 75.00 }, { quantity: 5, price: 60.00 }, { quantity: 15, price: 57.00 }, { quantity: 25, price: 55.20 }, { quantity: 50, price: 54.00 }, { quantity: 80, price: 52.20 }, { quantity: 150, price: 51.00 } ] },
-            { name: 'COUPE-VENT LEGER MIXTE CONFORT', category: 'RUNNING', type: 'haut', subtype: 'Hauts', excludedOptions: ['POCHE DOS ZIPPEE'], pricingTiers: [ { quantity: 1, price: 96.60 }, { quantity: 2, price: 82.80 }, { quantity: 3, price: 69.00 }, { quantity: 5, price: 55.20 }, { quantity: 15, price: 52.44 }, { quantity: 25, price: 50.78 }, { quantity: 50, price: 49.68 }, { quantity: 80, price: 48.02 }, { quantity: 150, price: 46.92 } ] },
-            { name: 'VESTE MI-SAISON HOMME CONFORT', category: 'RUNNING', type: 'haut', subtype: 'Hauts', pricingTiers: [ { quantity: 1, price: 136.50 }, { quantity: 2, price: 117.00 }, { quantity: 3, price: 97.50 }, { quantity: 5, price: 78.00 }, { quantity: 15, price: 74.10 }, { quantity: 25, price: 71.76 }, { quantity: 50, price: 70.20 }, { quantity: 80, price: 67.86 }, { quantity: 150, price: 66.30 } ] },
-            { name: 'VESTE MI-SAISON FEMME CONFORT', category: 'RUNNING', type: 'haut', subtype: 'Hauts', pricingTiers: [ { quantity: 1, price: 136.50 }, { quantity: 2, price: 117.00 }, { quantity: 3, price: 97.50 }, { quantity: 5, price: 78.00 }, { quantity: 15, price: 74.10 }, { quantity: 25, price: 71.76 }, { quantity: 50, price: 70.20 }, { quantity: 80, price: 67.86 }, { quantity: 150, price: 66.30 } ] },
-            // --- Bas ---
-            { name: 'SHORT RUNNING MIXTE', category: 'RUNNING', type: 'haut', subtype: 'Bas', excludedOptions: ['POCHE DOS ZIPPEE'], pricingTiers: [ { quantity: 1, price: 79.80 }, { quantity: 2, price: 68.40 }, { quantity: 3, price: 57.00 }, { quantity: 5, price: 45.60 }, { quantity: 15, price: 43.32 }, { quantity: 25, price: 41.95 }, { quantity: 50, price: 41.04 }, { quantity: 80, price: 39.67 }, { quantity: 150, price: 38.76 } ] },
-            { name: 'SHORTY FEMME RUNNING', category: 'RUNNING', type: 'haut', subtype: 'Bas', pricingGroup: 'cuissardShortyRunning', excludedOptions: ['POCHE DOS ZIPPEE'], pricingTiers: [ { quantity: 1, price: 84.00 }, { quantity: 2, price: 72.00 }, { quantity: 3, price: 60.00 }, { quantity: 5, price: 48.00 }, { quantity: 15, price: 45.60 }, { quantity: 25, price: 44.16 }, { quantity: 50, price: 43.20 }, { quantity: 80, price: 41.76 }, { quantity: 150, price: 40.80 } ] },
-            { name: 'CUISSARD RUNNING HOMME', category: 'RUNNING', type: 'haut', subtype: 'Bas', pricingGroup: 'cuissardShortyRunning', excludedOptions: ['POCHE DOS ZIPPEE'], pricingTiers: [ { quantity: 1, price: 84.00 }, { quantity: 2, price: 72.00 }, { quantity: 3, price: 60.00 }, { quantity: 5, price: 48.00 }, { quantity: 15, price: 45.60 }, { quantity: 25, price: 44.16 }, { quantity: 50, price: 43.20 }, { quantity: 80, price: 41.76 }, { quantity: 150, price: 40.80 } ] },
-            { name: 'COLLANT RUNNING MIXTE', category: 'RUNNING', type: 'haut', subtype: 'Bas', excludedOptions: ['POCHE DOS ZIPPEE'], pricingTiers: [ { quantity: 1, price: 105.00 }, { quantity: 2, price: 90.00 }, { quantity: 3, price: 75.00 }, { quantity: 5, price: 60.00 }, { quantity: 15, price: 57.00 }, { quantity: 25, price: 55.20 }, { quantity: 50, price: 54.00 }, { quantity: 80, price: 52.20 }, { quantity: 150, price: 51.00 } ] },
-            // --- Trifactions ---
-            { name: 'TRIFONCTION HOMME COURTE DISTANCE Peau TRI GEL', category: 'RUNNING', type: 'haut', subtype: 'Trifonctions', hasOptions: false, pricingGroup: 'trifonctionCourte', pricingTiers: [ { quantity: 1, price: 134.40 }, { quantity: 2, price: 115.20 }, { quantity: 3, price: 96.00 }, { quantity: 5, price: 76.80 }, { quantity: 15, price: 72.96 }, { quantity: 25, price: 70.66 }, { quantity: 50, price: 69.12 }, { quantity: 80, price: 66.82 }, { quantity: 150, price: 65.28 } ] },
-            { name: 'TRIFONCTION FEMME COURTE DISTANCE Peau TRI GEL', category: 'RUNNING', type: 'haut', subtype: 'Trifonctions', hasOptions: false, pricingGroup: 'trifonctionCourte', pricingTiers: [ { quantity: 1, price: 134.40 }, { quantity: 2, price: 115.20 }, { quantity: 3, price: 96.00 }, { quantity: 5, price: 76.80 }, { quantity: 15, price: 72.96 }, { quantity: 25, price: 70.66 }, { quantity: 50, price: 69.12 }, { quantity: 80, price: 66.82 }, { quantity: 150, price: 65.28 } ] },
-            { name: 'TRIFONCTION HOMME HALF Peau TRI GEL, ZIP DEVANT OU DOS', category: 'RUNNING', type: 'haut', subtype: 'Trifonctions', hasOptions: false, pricingGroup: 'trifonctionHalf', pricingTiers: [ { quantity: 1, price: 184.80 }, { quantity: 2, price: 158.40 }, { quantity: 3, price: 132.00 }, { quantity: 5, price: 105.60 }, { quantity: 15, price: 100.32 }, { quantity: 25, price: 97.15 }, { quantity: 50, price: 95.04 }, { quantity: 80, price: 91.87 }, { quantity: 150, price: 89.76 } ] },
-            { name: 'TRIFONCTION FEMME HALF Peau TRI GEL, ZIP DEVANT OU DOS', category: 'RUNNING', type: 'haut', subtype: 'Trifonctions', hasOptions: false, pricingGroup: 'trifonctionHalf', pricingTiers: [ { quantity: 1, price: 184.80 }, { quantity: 2, price: 158.40 }, { quantity: 3, price: 132.00 }, { quantity: 5, price: 105.60 }, { quantity: 15, price: 100.32 }, { quantity: 25, price: 97.15 }, { quantity: 50, price: 95.04 }, { quantity: 80, price: 91.87 }, { quantity: 150, price: 89.76 } ] },
-            
-            // =========== ACCESSOIRES ===========
-            { name: 'BANDANA ÉTÉ', category: 'ACCESSOIRES', type: 'accessoire', subtype: 'ACCESSOIRES PERSONNALISÉS', sizeType:'unique', minQuantity: 10, pricingTiers: [ { quantity: 10, price: 12.00 }, { quantity: 20, price: 10.44 }, { quantity: 50, price: 10.20 } ] },
-            { name: 'BANDEAU', category: 'ACCESSOIRES', type: 'accessoire', subtype: 'ACCESSOIRES PERSONNALISÉS', sizeType:'unique', minQuantity: 10, pricingTiers: [ { quantity: 10, price: 9.00 },  { quantity: 20, price: 8.40 }, { quantity: 50, price: 7.20 } ] },
-            { name: 'TOUR DE COU', category: 'ACCESSOIRES', type: 'accessoire', subtype: 'ACCESSOIRES PERSONNALISÉS', sizeType:'unique', minQuantity: 10, pricingTiers: [ { quantity: 10, price: 10.20 }, { quantity: 20, price: 8.70 }, { quantity: 50, price: 8.40 } ] },
-            { name: 'PASSE MONTAGNE', category: 'ACCESSOIRES', type: 'accessoire', subtype: 'ACCESSOIRES PERSONNALISÉS', sizeType:'unique', minQuantity: 10, pricingTiers: [ { quantity: 10, price: 18.00 }, { quantity: 20, price: 15.60 }, { quantity: 50, price: 14.40 } ] },
-            { name: 'MANCHETTES HIVER VELO/RUNNING', category: 'ACCESSOIRES', type: 'accessoire', subtype: 'ACCESSOIRES PERSONNALISÉS', sizeType:'manchettes', minQuantity: 10, pricingTiers: [ { quantity: 10, price: 19.20 }, { quantity: 20, price: 16.80 }, { quantity: 50, price: 15.60 } ] },
-            { name: 'JAMBIERES', category: 'ACCESSOIRES', type: 'accessoire', subtype: 'ACCESSOIRES PERSONNALISÉS', sizeType:'jambieres', minQuantity: 10, pricingTiers: [ { quantity: 10, price: 26.40 }, { quantity: 20, price: 24.00 }, { quantity: 50, price: 22.80 } ] },
-            { name: 'GANTS ÉTÉ', category: 'ACCESSOIRES', type: 'accessoire', subtype: 'ACCESSOIRES PERSONNALISÉS', sizeType:'gants', minQuantity: 10, pricingTiers: [ { quantity: 10, price: 21.00 }, { quantity: 20, price: 18.00 }, { quantity: 50, price: 16.80 } ] },
-            { name: 'TAPIS DE TRANSITION MULTISPORTS', category: 'ACCESSOIRES', type: 'accessoire', subtype: 'ACCESSOIRES PERSONNALISÉS', sizeType:'unique', minQuantity: 10, pricingTiers: [ { quantity: 10, price: 10.80 }, { quantity: 20, price: 9.18 }, { quantity: 50, price: 8.40 } ] },
-            { name: 'CHAUSSETTES AERO MIXTE 18cm', category: 'ACCESSOIRES', type: 'accessoire', subtype: 'ACCESSOIRES PERSONNALISÉS', sizeType:'chaussettes', minQuantity: 10, pricingTiers: [ { quantity: 10, price: 21.00 }, { quantity: 20, price: 20.40 }, { quantity: 50, price: 19.20 } ] },
-            { name: 'CHAUSSETTES VELO/COURSE A PIED Mixte Tige 13 ou 17cm', category: 'ACCESSOIRES', type: 'accessoire', subtype: 'ACCESSOIRES PERSONNALISÉS', sizeType:'chaussettes', minQuantity: 50, pricingTiers: [ { quantity: 50, price: 12.60 }, { quantity: 100, price: 12.00 }, { quantity: 200, price: 12.00 } ] },
-            { name: 'GAPETTE VELO', category: 'ACCESSOIRES', type: 'accessoire', subtype: 'ACCESSOIRES PERSONNALISÉS', sizeType:'unique', minQuantity: 50, pricingTiers: [ { quantity: 50, price: 15.00 }, { quantity: 100, price: 13.20 }, { quantity: 200, price: 13.20 } ] },
-            { name: 'DOSSARDS JEU DE 1 à 100', category: 'ACCESSOIRES', type: 'accessoire', subtype: 'ACCESSOIRES PERSONNALISÉS', sizeType:'unique', pricingTiers: [{quantity: 1, price: 68.80}] },
-            { name: 'DOSSARDS JEU DE 1 à 150', category: 'ACCESSOIRES', type: 'accessoire', subtype: 'ACCESSOIRES PERSONNALISÉS', sizeType:'unique', pricingTiers: [{quantity: 1, price: 91.20}] },
-            { name: 'DOSSARDS JEU DE 1 à 200', category: 'ACCESSOIRES', type: 'accessoire', subtype: 'ACCESSOIRES PERSONNALISÉS', sizeType:'unique', pricingTiers: [{quantity: 1, price: 115.20}] },
-            { name: 'DOSSARDS JEU DE 1 à 250', category: 'ACCESSOIRES', type: 'accessoire', subtype: 'ACCESSOIRES PERSONNALISÉS', sizeType:'unique', pricingTiers: [{quantity: 1, price: 136.00}] },
-            { name: 'DOSSARDS JEU DE 1 à 300', category: 'ACCESSOIRES', type: 'accessoire', subtype: 'ACCESSOIRES PERSONNALISÉS', sizeType:'unique', pricingTiers: [{quantity: 1, price: 158.40}] },
-            { name: 'SOUS-MAILLOT SANS MANCHES', category: 'ACCESSOIRES', type: 'accessoire', subtype: 'ACCESSOIRES PERMANENTS', sizeType: 'sousMaillot', price: 40, colors: ["blanc"]},
-            { name: 'SOUS-MAILLOT MI-SAISON MANCHES COURTES', category: 'ACCESSOIRES', type: 'accessoire', subtype: 'ACCESSOIRES PERMANENTS', sizeType: 'sousMaillot', price: 45, colors: ["blanc"]},
-            { name: 'SOUS-MAILLOT HIVER MANCHES LONGUES', category: 'ACCESSOIRES', type: 'accessoire', subtype: 'ACCESSOIRES PERMANENTS', sizeType: 'sousMaillotHiver', price: 55, colors: ["blanc"]},
-            { name: 'SOUS CASQUE', category: 'ACCESSOIRES', type: 'accessoire', subtype: 'ACCESSOIRES PERMANENTS', sizeType: 'unique', price: 18, colors: ["NOIR"]},
-            { name: 'CAGOULE', category: 'ACCESSOIRES', type: 'accessoire', subtype: 'ACCESSOIRES PERMANENTS', sizeType: 'unique', price: 20, colors: ["NOIR"]},
-            { name: 'GANTS HIVER', category: 'ACCESSOIRES', type: 'accessoire', subtype: 'ACCESSOIRES PERMANENTS', sizeType: 'gants', price: 55, colors: ["NOIR"]},
-            { name: 'GANTS ETE CONFORT', category: 'ACCESSOIRES', type: 'accessoire', subtype: 'ACCESSOIRES PERMANENTS', sizeType: 'gants', price: 30, colors: ["NOIR", "BLANC", "MARINE", "BRETON PUR BEURRE"]},
-            { name: 'GANTS ETE SLIM', category: 'ACCESSOIRES', type: 'accessoire', subtype: 'ACCESSOIRES PERMANENTS', sizeType: 'gants', price: 40, colors: ["NOIR"]},
-            { name: 'GANTS MI-SAISON', category: 'ACCESSOIRES', type: 'accessoire', subtype: 'ACCESSOIRES PERMANENTS', sizeType: 'gantsMiSaison', price: 30, colors: ["NOIR"]},
-            { name: 'COUVRE-CHAUSSURES AÉRO', category: 'ACCESSOIRES', type: 'accessoire', subtype: 'ACCESSOIRES PERMANENTS', sizeType: 'couvreChaussuresAero', price: 40, colors: ["NOIR"]},
-            { name: 'COUVRE-CHAUSSURES HIVER/PLUIE', category: 'ACCESSOIRES', type: 'accessoire', subtype: 'ACCESSOIRES PERMANENTS', sizeType: 'couvreChaussuresHiver', price: 65, colors: ["NOIR"]},
-            { name: 'BANDEAU', category: 'ACCESSOIRES', type: 'accessoire', subtype: 'ACCESSOIRES PERMANENTS', sizeType: 'bandeau', price: 12, colors: ["ARDENT", "FLUO", "HYPNOTIC", "BRETON PUR BEURRE"]},
-            { name: 'TOUR DE COU', category: 'ACCESSOIRES', type: 'accessoire', subtype: 'ACCESSOIRES PERMANENTS', sizeType: 'tourDeCou', price: 15, colors: ["ARDENT", "FLUO", "HYPNOTIC", "BRETON PUR BEURRE"]},
-            { name: 'GAPETTE', category: 'ACCESSOIRES', type: 'accessoire', subtype: 'ACCESSOIRES PERMANENTS', sizeType: 'unique', price: 20, colors: ["ARDENT", "MAGICREME", "HYPNOTIC", "NOIR"]},
-            { name: 'MANCHETTES', category: 'ACCESSOIRES', type: 'accessoire', subtype: 'ACCESSOIRES PERMANENTS', sizeType: 'manchettes', price: 33, colors: ["NOIR"]},
-            { name: 'GENOUILLERES', category: 'ACCESSOIRES', type: 'accessoire', subtype: 'ACCESSOIRES PERMANENTS', sizeType: 'manchettes', price: 33, colors: ["NOIR"]},
-            { name: 'JAMBIERES', category: 'ACCESSOIRES', type: 'accessoire', subtype: 'ACCESSOIRES PERMANENTS', sizeType: 'jambieres', price: 40, colors: ["NOIR"]},
-            { name: 'CHAUSSETTES AÉRO', category: 'ACCESSOIRES', type: 'accessoire', subtype: 'ACCESSOIRES PERMANENTS', sizeType: 'chaussettes', price: 30, colors: ["NOIR", "BLANC", "ARDENT", "HYPNOTIC"]},
-            { name: 'CHAUSSETTES MI-HAUTES', category: 'ACCESSOIRES', type: 'accessoire', subtype: 'ACCESSOIRES PERMANENTS', sizeType: 'chaussettes', price: 17, colors: ["NOIR", "BLANC", "BEIGE", "BRETON PUR BEURRE"]},
-            
-            // =========== ENFANTS ===========
-            { name: 'MAILLOT ENFANT PERFORMANCE MC', category: 'ENFANTS', type: 'enfant', subtype: 'Cyclisme Enfant', hasOptions: false, pricingTiers: [{ quantity: 1, price: 42.00 }] },
-            { name: 'MAILLOT VTT/DESCENTE ENFANT CONFORT MC', category: 'ENFANTS', type: 'enfant', subtype: 'Cyclisme Enfant', hasOptions: false, pricingTiers: [{ quantity: 1, price: 44.40 }] },
-            { name: 'MAILLOT BMX ENFANT CONFORT ML', category: 'ENFANTS', type: 'enfant', subtype: 'Cyclisme Enfant', hasOptions: false, pricingTiers: [{ quantity: 1, price: 50.40 }] },
-            { name: 'MAILLOT MI-SAISON ENFANT CONFORT ML', category: 'ENFANTS', type: 'enfant', subtype: 'Cyclisme Enfant', hasOptions: false, pricingTiers: [{ quantity: 1, price: 49.20 }] },
-            { name: 'GILET COUPE-VENT LEGER ENFANT', category: 'ENFANTS', type: 'enfant', subtype: 'Cyclisme Enfant', hasOptions: false, pricingTiers: [{ quantity: 1, price: 42.00 }] },
-            { name: 'VESTE HIVER ENFANT CONFORT', category: 'ENFANTS', type: 'enfant', subtype: 'Cyclisme Enfant', hasOptions: false, pricingTiers: [{ quantity: 1, price: 90.00 }] },
-            { name: 'CUISSARD ENFANT CONFORT', category: 'ENFANTS', type: 'enfant', subtype: 'Cyclisme Enfant', hasOptions: false, pricingTiers: [{ quantity: 1, price: 42.00 }] },
-            { name: 'COLLANT HIVER ENFANT SUBLIME CONFORT', category: 'ENFANTS', type: 'enfant', subtype: 'Cyclisme Enfant', hasOptions: false, pricingTiers: [{ quantity: 1, price: 60.00 }] },
-            { name: 'COLLANT ENFANT VELOURS ECHAUFFEMENT', category: 'ENFANTS', type: 'enfant', subtype: 'Cyclisme Enfant', hasOptions: false, pricingTiers: [{ quantity: 1, price: 48.00 }] },
-            { name: 'MAILLOT RUNNING ENFANT MANCHES COURTES', category: 'ENFANTS', type: 'enfant', subtype: 'Running Enfants', hasOptions: false, pricingTiers: [{ quantity: 1, price: 30.00 }] },
-            { name: 'DEBARDEUR ATHLETISME ENFANT', category: 'ENFANTS', type: 'enfant', subtype: 'Running Enfants', hasOptions: false, pricingTiers: [{ quantity: 1, price: 27.00 }] },
-            { name: 'CUISSARD RUNNING ENFANT', category: 'ENFANTS', type: 'enfant', subtype: 'Running Enfants', hasOptions: false, pricingTiers: [{ quantity: 1, price: 36.00 }] },
-            { name: 'TRIFONCTION ENFANT COURTE DISTANCE', category: 'ENFANTS', type: 'enfant', subtype: 'Running Enfants', hasOptions: false, pricingTiers: [{ quantity: 1, price: 55.20 }] },
+            <div class="mt-auto pt-4">
+                 <!-- Price Display Box (Container for different views) -->
+                <div class="product-display-box bg-slate-50 p-4 rounded-lg">
+                    <!-- View for DEVIS mode -->
+                    <div class="single-price-view" style="display:none;">
+                         <div class="flex items-center justify-between">
+                            <div>
+                                <label class="quantity-label text-sm font-medium text-gray-700 block">Quantité:</label>
+                                <input type="number" min="0" class="quantity-input mt-1 w-24 rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
+                            </div>
+                            <div class="text-right">
+                                <p class="text-xs text-gray-500">Prix U. TTC</p>
+                                <p class="price-display text-2xl font-bold text-indigo-700">- €</p>
+                            </div>
+                        </div>
+                        <div class="quantity-warning text-xs text-red-600 font-semibold mt-1" style="display: none;"></div>
+                    </div>
+                    <!-- View for PRESENTATION mode -->
+                    <div class="tiers-price-view" style="display:none;">
+                        <p class="text-sm font-semibold text-gray-700 mb-2 text-center">Grille Tarifaire TTC</p>
+                        <div class="tiers-content text-xs"></div>
+                    </div>
+                    <!-- View for TEAM mode -->
+                    <div class="team-price-view" style="display:none;">
+                         <p class="text-sm font-semibold text-gray-700 mb-2 text-center">Tarifs Spécifiques TEAM</p>
+                        <div class="team-tiers-content text-xs"></div>
+                    </div>
+                </div>
 
-            // =========== OPTIONS ===========
-            { name: 'POCHE DOS ZIPPEE', category: 'option', type: 'option', pricingTiers: [ { quantity: 1, price: 11.72 }, { quantity: 2, price: 9.38 }, { quantity: 3, price: 7.50 }, { quantity: 5, price: 6.00 }, { quantity: 15, price: 5.70 }, { quantity: 25, price: 5.52 }, { quantity: 50, price: 5.40 }, { quantity: 80, price: 5.22 }, { quantity: 150, price: 5.10 } ] },
-            { name: 'BANDE REFLECTIVE', category: 'option', type: 'option', pricingTiers: [ { quantity: 1, price: 7.08 }, { quantity: 2, price: 5.40 }, { quantity: 3, price: 4.50 }, { quantity: 5, price: 3.60 }, { quantity: 15, price: 3.42 }, { quantity: 25, price: 3.31 }, { quantity: 50, price: 3.24 }, { quantity: 80, price: 3.13 }, { quantity: 150, price: 3.06 }, ] },
-            { name: 'Ajustement Longueur +3cm', category: 'option', type: 'option', optionGroup: 'length', fixedPriceTTC: 7.20 },
-            { name: 'Ajustement Longueur +6cm', category: 'option', type: 'option', optionGroup: 'length', fixedPriceTTC: 7.20 },
-            { name: 'Ajustement Longueur +9cm', category: 'option', type: 'option', optionGroup: 'length', fixedPriceTTC: 7.20 },
-            { name: 'Ajustement Longueur -3cm', category: 'option', type: 'option', optionGroup: 'length', fixedPriceTTC: 7.20 },
-            { name: 'Ajustement Longueur -6cm', category: 'option', type: 'option', optionGroup: 'length', fixedPriceTTC: 7.20 },
-            { name: 'Ajustement Longueur -9cm', category: 'option', type: 'option', optionGroup: 'length', fixedPriceTTC: 7.20 },
-        ];
+                <div class="product-options-container"></div>
+            </div>
+        </div>
+    </template>
 
-        const productSizes = {
-            haut: ['XXS', 'XS', 'S', 'M', 'L', 'XL', 'XXL', '3XL', '4XL', '5XL', '6XL'],
-            enfant: ['6A', '8A', '10A', '12A', '14A', '16A'],
-            aero: ['XXS', 'XS', 'S', 'M', 'L', 'XL', 'XXL', '3XL'],
-            ample: ['XXS', 'XS', 'S', 'M', 'L', 'XL', 'XXL', '3XL', '4XL', '5XL', '6XL'],
-            largeHaut: ['XXS', 'XS', 'S', 'M', 'L', 'XL', 'XXL', '3XL', '4XL', '5XL', '6XL'],
-            manchettes: ["P (Biceps 27/31cm)", "G (Biceps 31/34cm)"],
-            jambieres: ["P (Cuisses 39/44cm)", "G (Cuisses 44/50cm)"],
-            unique: ["U"],
-            gants: ["XXS", "XS", "S", "M", "L", "XL", "XXL"],
-            chaussettes: ["S/M (35/40)", "L/XL (41/46)"],
-            sousMaillot: ["2XS/XS", "S/M", "L/XL", "2XL/3XL"],
-            sousMaillotHiver: ["S", "M", "L", "XL"],
-            gantsMiSaison: ["S", "M", "L", "XL"],
-            couvreChaussuresAero: ["36/38", "39/41", "42/44", "45/47"],
-            couvreChaussuresHiver: ["38/39", "40/42", "43/44", "45/46", "47/48"],
-            bandeau: ["XXS", "XS", "S", "M", "L", "XL", "XXL"],
-            tourDeCou: ["XXS", "XS", "S", "M", "L", "XL", "XXL"],
-        };
+    <!-- Modals -->
+    <div id="alert-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full items-center justify-center hidden">
+      <div class="relative mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+        <div class="mt-3 text-center">
+          <h3 id="alert-modal-title" class="text-lg leading-6 font-medium text-gray-900"></h3>
+          <div class="mt-2 px-7 py-3"><p id="alert-modal-body" class="text-sm text-gray-500"></p></div>
+          <div class="items-center px-4 py-3">
+            <button id="alert-modal-close-btn" class="px-4 py-2 bg-indigo-500 text-white text-base font-medium rounded-md w-full shadow-sm hover:bg-indigo-600 focus:outline-none focus:ring-2 focus:ring-indigo-300">OK</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div id="conseil-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full items-center justify-center hidden">
+      <div class="relative mx-auto p-5 border w-full max-w-lg shadow-lg rounded-md bg-white">
+         <button id="conseil-modal-close-btn" class="absolute top-2 right-2 text-gray-400 hover:text-gray-600">&times;</button>
+        <div class="mt-3">
+          <h3 id="conseil-modal-title" class="text-lg leading-6 font-medium text-gray-900"></h3>
+          <div id="conseil-modal-body" class="mt-4 prose prose-sm max-w-none"></div>
+        </div>
+      </div>
+    </div>
+    
+    <div id="tariff-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full items-center justify-center hidden p-4">
+      <div class="relative w-full max-w-7xl shadow-lg rounded-md bg-white flex flex-col h-full max-h-[90vh]">
+         <div class="flex justify-between items-center p-4 border-b">
+             <h3 class="text-xl leading-6 font-bold text-gray-900">Tarif Général 2025/2026 - Prix Publics TTC</h3>
+             <button id="tariff-modal-close-btn" class="text-gray-400 hover:text-gray-600 text-3xl font-bold">&times;</button>
+         </div>
+         <div id="tariff-modal-body" class="p-5 overflow-auto"></div>
+      </div>
+    </div>
+    
+     <div id="pdf-selection-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full items-center justify-center hidden p-4">
+      <div class="relative w-full max-w-lg shadow-lg rounded-md bg-white flex flex-col">
+         <div class="flex justify-between items-center p-4 border-b">
+             <h3 class="text-lg leading-6 font-bold text-gray-900">Confirmer la sélection pour le PDF</h3>
+         </div>
+         <div class="p-5 overflow-auto max-h-96">
+            <div class="flex justify-between mb-3">
+                <button id="pdf-select-all-btn" class="text-xs text-indigo-600 hover:underline">Tout cocher</button>
+                <button id="pdf-deselect-all-btn" class="text-xs text-indigo-600 hover:underline">Tout décocher</button>
+            </div>
+            <div id="pdf-selection-list" class="space-y-2"></div>
+         </div>
+         <div class="flex justify-end gap-3 p-4 border-t bg-gray-50">
+             <button id="pdf-selection-cancel-btn" class="px-4 py-2 bg-gray-200 text-gray-800 text-sm font-medium rounded-md hover:bg-gray-300">Annuler</button>
+             <button id="pdf-selection-confirm-btn" class="px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-md hover:bg-green-700">Confirmer et Générer</button>
+         </div>
+      </div>
+    </div>
 
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
         const TVA_RATE = 0.20;
-        const DOWN_PAYMENT_RATE = 0.30;
         const GRAPHIC_FEE_TTC = 150;
-        
-        // --- Sorting Logic & Helpers ---
-        const productSortOrderMap = new Map(allAvailableProducts.map((p, i) => [p.name, i]));
+        const sizeData = {
+            default: 'XS, S, M, L, XL, XXL, 3XL, 4XL, 5XL',
+            ample: 'XS, S, M, L, XL, XXL, 3XL, 4XL, 5XL',
+            aero: '3XS, XXS, XS, S, M, L, XL, XXL',
+            enfant: '6 ans, 8 ans, 10 ans, 12 ans, 14 ans',
+            largeHaut: 'S, M, L, XL, XXL, 3XL',
+            chaussettes: '35-38, 39-42, 43-46',
+            cuissardConfort: 'XXS, XS, S, M, L, XL, XXL, 3XL, 4XL, 5XL, 6XL'
+        };
+        const friendlyGroupNames = {
+            maillotClassiqueMC: 'Maillot Classique MC',
+            maillotMiSaisonML: 'Maillot Mi-saison ML',
+            giletCoupeVent: 'Gilet Coupe-Vent',
+            coupeVent: 'Coupe-Vent',
+            vesteMiSaison: 'Veste Mi-Saison',
+            vesteHiver: 'Veste Hiver',
+            cuissardConfortLandscape: 'Cuissard Confort',
+            cuissardAeroCervino: 'Cuissard AERO',
+            corsaireConfortLandscape: 'Corsaire Confort',
+            collantHiverConfortLandscape: 'Collant Hiver Confort',
+            collantHiverAeroCervino: 'Collant Hiver AERO',
+            maillotRunning: 'Maillot Running',
+            maillotRunningHiver: 'Maillot Running Hiver',
+            debardeurRunning: 'Débardeur Running',
+        };
 
-        const masterSizeOrder = [
-            '6A', '8A', '10A', '12A', '14A', '16A', '2XS/XS', 'XXS', 'XS', 'S', 'M', 'L', 'XL', 'XXL',
-            'S/M', 'L/XL', '2XL/3XL', '3XL', '4XL', '5XL', '6XL', 'S/M (35/40)', '36/38', '38/39', 
-            '39/41', 'L/XL (41/46)', '40/42', '42/44', '43/44', '44/45', '45/46', '45/47', '47/48',
-            "P (Biceps 27/31cm)", "G (Biceps 31/34cm)", "P (Cuisses 39/44cm)", "G (Cuisses 44/50cm)", 'U'
+        const conseilCuissard = `<h4 class="font-bold text-gray-800">Comment choisir sa peau ?</h4><p class="mt-2 text-sm text-gray-600">Le choix de la peau est essentiel pour votre confort. Chaque type de peau est conçu pour une durée et une intensité d'effort spécifiques.</p><ul class="mt-2 list-disc list-inside text-sm space-y-1"><li><strong>Peau ENDURANCE 2.5 :</strong> Idéale pour les longues distances et les entraînements intensifs.</li><li><strong>Peau LANDSCAPE :</strong> Polyvalente, parfaite pour les sorties régulières et les compétitions.</li><li><strong>Peau CERVINO :</strong> Conçue pour la performance, offrant un excellent soutien pour les courses et les efforts courts et intenses.</li></ul><p class="mt-3 text-xs italic text-gray-500">Consultez les fiches techniques des peaux pour plus de détails sur leurs spécificités.</p>`;
+        const confortWinterJacketTiers = [
+            { quantity: 1, price: 153.00 }, { quantity: 2, price: 131.10 }, { quantity: 3, price: 109.25 },
+            { quantity: 5, price: 87.40 }, { quantity: 15, price: 83.03 }, { quantity: 25, price: 80.41 },
+            { quantity: 50, price: 78.66 }, { quantity: 80, price: 76.04 }, { quantity: 150, price: 74.30 }
         ];
-        const sizeSortOrderMap = new Map(masterSizeOrder.map((s, i) => [s, i]));
+    const thermiqueWinterJacketTiers = [
+        { quantity: 1, price: 159.60 }, { quantity: 2, price: 136.80 }, { quantity: 3, price: 114.00 },
+        { quantity: 5, price: 91.20 }, { quantity: 15, price: 86.64 }, { quantity: 25, price: 83.90 },
+        { quantity: 50, price: 82.08 }, { quantity: 80, price: 79.34 }, { quantity: 150, price: 77.52 }
+    ];
+    const allAvailableProducts = [
+        { name: 'MAILLOT CLASSIQUE HOMME CONFORT MC', category: 'CYCLISME', type: 'haut', subtype: 'Maillots Manches Courtes', pricingGroup: 'maillotClassiqueMC', techSheetLink: 'https://acrobat.adobe.com/id/urn:aaid:sc:EU:3206a4eb-2bde-4045-93de-eeef78bf61ff', pricingTiers: [ { quantity: 1, price: 86.10 }, { quantity: 2, price: 73.80 }, { quantity: 3, price: 61.50 }, { quantity: 5, price: 49.20 }, { quantity: 15, price: 46.74 }, { quantity: 25, price: 45.26 }, { quantity: 50, price: 44.28 }, { quantity: 80, price: 42.80 }, { quantity: 150, price: 41.82 } ] },
+        { name: 'MAILLOT CLASSIQUE FEMME CONFORT MC', category: 'CYCLISME', type: 'haut', subtype: 'Maillots Manches Courtes', pricingGroup: 'maillotClassiqueMC', pricingTiers: [ { quantity: 1, price: 86.10 }, { quantity: 2, price: 73.80 }, { quantity: 3, price: 61.50 }, { quantity: 5, price: 49.20 }, { quantity: 15, price: 46.74 }, { quantity: 25, price: 45.26 }, { quantity: 50, price: 44.28 }, { quantity: 80, price: 42.80 }, { quantity: 150, price: 41.82 } ] },
+        { name: 'MAILLOT MIXTE CONFORT SANS MANCHE', category: 'CYCLISME', type: 'haut', subtype: 'Maillots Manches Courtes', pricingTiers: [ { quantity: 1, price: 86.10 }, { quantity: 2, price: 73.80 }, { quantity: 3, price: 61.50 }, { quantity: 5, price: 49.20 }, { quantity: 15, price: 46.74 }, { quantity: 25, price: 45.26 }, { quantity: 50, price: 44.28 }, { quantity: 80, price: 42.80 }, { quantity: 150, price: 41.82 } ] },
+        { name: 'MAILLOT MIXTE PERFORMANCE MC', category: 'CYCLISME', type: 'haut', subtype: 'Maillots Manches Courtes', pricingTiers: [ { quantity: 1, price: 89.25 },{ quantity: 2, price: 76.50 }, { quantity: 3, price: 63.75 }, { quantity: 5, price: 51.00 }, { quantity: 15, price: 48.45 }, { quantity: 25, price: 46.92 }, { quantity: 50, price: 45.90 }, { quantity: 80, price: 44.37 }, { quantity: 150, price: 43.35 } ] },
+        { name: 'MAILLOT VTT/DESCENTE MIXTE CONFORT MC (Très ample)', category: 'CYCLISME', type: 'haut', subtype: 'Maillots Manches Courtes', sizeType: 'largeHaut', hasOptions: false, techSheetLink: 'https://acrobat.adobe.com/id/urn:aaid:sc:EU:fe1475d4-25df-4dc8-acf0-58e700b92792', pricingTiers: [ { quantity: 1, price: 77.70 }, { quantity: 2, price: 66.60 }, { quantity: 3, price: 55.50 }, { quantity: 5, price: 44.40 }, { quantity: 15, price: 42.18 }, { quantity: 25, price: 40.85 }, { quantity: 50, price: 39.96 }, { quantity: 80, price: 38.63 }, { quantity: 150, price: 37.74 } ] },
+        { name: 'MAILLOT MIXTE AERO MC', category: 'CYCLISME', type: 'haut', subtype: 'Maillots Manches Courtes', sizeType: 'aero', techSheetLink: 'https://acrobat.adobe.com/id/urn:aaid:sc:EU:05f14843-0c71-4630-8791-ec044cf3d106', pricingTiers: [ { quantity: 1, price: 96.60 }, { quantity: 2, price: 82.80 }, { quantity: 3, price: 69.00 }, { quantity: 5, price: 55.20 }, { quantity: 15, price: 52.44 }, { quantity: 25, price: 45.00 }, { quantity: 50, price: 44.10 }, { quantity: 80, price: 42.75 }, { quantity: 150, price: 41.88 } ] },
+        { name: 'MAILLOT MI-SAISON HOMME CONFORT ML', category: 'CYCLISME', type: 'haut', subtype: 'Maillots Manches Longues', pricingGroup: 'maillotMiSaisonML', techSheetLink: 'https://acrobat.adobe.com/id/urn:aaid:sc:EU:325cbd11-bb7f-4b21-92a0-beb5b76a4626', pricingTiers: [ { quantity: 1, price: 94.50 }, { quantity: 2, price: 81.00 }, { quantity: 3, price: 67.50 }, { quantity: 5, price: 54.00 }, { quantity: 15, price: 51.30 }, { quantity: 25, price: 49.68 }, { quantity: 50, price: 48.60 }, { quantity: 80, price: 46.98 }, { quantity: 150, price: 45.90 } ] },
+        { name: 'MAILLOT MI-SAISON FEMME CONFORT ML', category: 'CYCLISME', type: 'haut', subtype: 'Maillots Manches Longues', pricingGroup: 'maillotMiSaisonML', techSheetLink: 'https://acrobat.adobe.com/id/urn:aaid:sc:EU:bfb0ee58-6844-4ee3-a811-432beaea7517', pricingTiers: [ { quantity: 1, price: 94.50 }, { quantity: 2, price: 81.00 }, { quantity: 3, price: 67.50 }, { quantity: 5, price: 54.00 }, { quantity: 15, price: 51.30 }, { quantity: 25, price: 49.68 }, { quantity: 50, price: 48.60 }, { quantity: 80, price: 46.98 }, { quantity: 150, price: 45.90 } ] },
+        { name: 'MAILLOT BMX MIXTE CONFORT ML (Très ample)', category: 'CYCLISME', type: 'haut', subtype: 'Maillots Manches Longues', sizeType: 'largeHaut', hasOptions: false, techSheetLink: 'https://acrobat.adobe.com/id/urn:aaid:sc:EU:117f4f03-d6d5-4818-a87e-2491c1bdf8b0', pricingTiers: [ { quantity: 1, price: 88.20 }, { quantity: 2, price: 75.60 }, { quantity: 3, price: 63.00 }, { quantity: 5, price: 50.40 }, { quantity: 15, price: 47.88 }, { quantity: 25, price: 46.37 }, { quantity: 50, price: 45.36 }, { quantity: 80, price: 43.85 }, { quantity: 150, price: 42.84 } ] },
+        { name: 'MAILLOT MI-SAISON MIXTE AERO ML', category: 'CYCLISME', type: 'haut', subtype: 'Maillots Manches Longues', sizeType: 'aero', techSheetLink: 'https://acrobat.adobe.com/id/urn:aaid:sc:EU:b09fd90e-1362-4517-ba8f-952d4e81158b', pricingTiers: [ { quantity: 1, price: 107.10 }, { quantity: 2, price: 91.80 }, { quantity: 3, price: 76.50 }, { quantity: 5, price: 61.20 }, { quantity: 15, price: 58.14 }, { quantity: 25, price: 56.30 }, { quantity: 50, price: 55.08 }, { quantity: 80, price: 53.24 }, { quantity: 150, price: 52.02 } ] },
+        { name: 'MAILLOT PLUIE MIXTE AERO MC (non sublimé, marquage DTF)', category: 'CYCLISME', type: 'haut', subtype: 'Essentiels et Vestes', price: 85.20, techSheetLink: 'https://acrobat.adobe.com/id/urn:aaid:sc:EU:05461d8f-709e-4ec2-9e7f-07cd60e10d74' },
+        { name: 'MAILLOT PLUIE MIXTE AERO ML (non sublimé, marquage DTF)', category: 'CYCLISME', type: 'haut', subtype: 'Essentiels et Vestes', price: 102.00, techSheetLink: 'https://acrobat.adobe.com/id/urn:aaid:sc:EU:05461d8f-709e-4ec2-9e7f-07cd60e10d74' },
+        { name: 'GILET COUPE-VENT LEGER MIXTE (vent et pluie fine, sans poche dos)', category: 'CYCLISME', type: 'haut', subtype: 'Essentiels et Vestes', pricingGroup: 'giletCoupeVent', excludedOptions: ['POCHE DOS ZIPPEE'], techSheetLink: 'https://acrobat.adobe.com/id/urn:aaid:sc:EU:e33e2526-748d-45b9-9caa-ade12d3a0059', pricingTiers: [ { quantity: 1, price: 72.45 }, { quantity: 2, price: 62.10 }, { quantity: 3, price: 51.75 }, { quantity: 5, price: 41.40 }, { quantity: 15, price: 39.33 }, { quantity: 25, price: 38.09 }, { quantity: 50, price: 37.26 }, { quantity: 80, price: 36.02 }, { quantity: 150, price: 35.19 } ] },
+        { name: 'GILET COUPE-VENT MI-SAISON MIXTE (dos ajouré)', category: 'CYCLISME', type: 'haut', subtype: 'Essentiels et Vestes', pricingGroup: 'giletCoupeVent', excludedOptions: ['POCHE DOS ZIPPEE'], techSheetLink: 'https://acrobat.adobe.com/id/urn:aaid:sc:EU:f155520b-2268-404b-9491-37b228a72ae7', pricingTiers: [ { quantity: 1, price: 91.35 }, { quantity: 2, price: 78.30 }, { quantity: 3, price: 65.25 }, { quantity: 5, price: 52.20 }, { quantity: 15, price: 49.59 }, { quantity: 25, price: 48.02 }, { quantity: 50, price: 46.98 }, { quantity: 80, price: 45.41 }, { quantity: 150, price: 44.37 } ] },
+        { name: 'GILET COUPE-VENT HIVER MIXTE (tout membranné)', category: 'CYCLISME', type: 'haut', subtype: 'Essentiels et Vestes', pricingGroup: 'giletCoupeVent', excludedOptions: ['POCHE DOS ZIPPEE'], techSheetLink: 'https://acrobat.adobe.com/id/urn:aaid:sc:EU:d4ac0624-a655-4a27-b02d-2a00460fcd0b', pricingTiers: [ { quantity: 1, price: 97.65 }, { quantity: 2, price: 83.70 }, { quantity: 3, price: 69.75 }, { quantity: 5, price: 55.80 }, { quantity: 15, price: 53.01 }, { quantity: 25, price: 51.34 }, { quantity: 50, price: 50.22 }, { quantity: 80, price: 48.55 }, { quantity: 150, price: 47.43 } ] },
+        { name: 'COUPE-VENT LEGER MIXTE CONFORT (vent et pluie fine)', category: 'CYCLISME', type: 'haut', subtype: 'Essentiels et Vestes', pricingGroup: 'coupeVent', techSheetLink: 'https://acrobat.adobe.com/id/urn:aaid:sc:EU:1c71ad46-5363-43b0-8051-ba153ccf7a53', pricingTiers: [ { quantity: 1, price: 96.60 }, { quantity: 2, price: 82.80 }, { quantity: 3, price: 69.00 }, { quantity: 5, price: 55.20 }, { quantity: 15, price: 52.44 }, { quantity: 25, price: 50.78 }, { quantity: 50, price: 49.68 }, { quantity: 80, price: 48.02 }, { quantity: 150, price: 46.92 } ] },
+        { name: 'COUPE-VENT LEGER DEPERLANT MIXTE CONFORT (avec membranne)', category: 'CYCLISME', type: 'haut', subtype: 'Essentiels et Vestes', pricingGroup: 'coupeVent', techSheetLink: 'https://acrobat.adobe.com/id/urn:aaid:sc:EU:a588b2ef-7669-4eb9-8b3d-b6fef039383e', pricingTiers: [ { quantity: 1, price: 128.10 }, { quantity: 2, price: 109.80 }, { quantity: 3, price: 91.50 }, { quantity: 5, price: 73.20 }, { quantity: 15, price: 69.54 }, { quantity: 25, price: 67.34 }, { quantity: 50, price: 65.88 }, { quantity: 80, price: 63.68 }, { quantity: 150, price: 62.22 } ] },
+        { name: 'VESTE MI-SAISON HOMME CONFORT', category: 'CYCLISME', type: 'haut', subtype: 'Essentiels et Vestes', pricingGroup: 'vesteMiSaison', techSheetLink: 'https://acrobat.adobe.com/id/urn:aaid:sc:EU:264e626b-2bc5-4781-8d39-57084c462a4c', pricingTiers: [ { quantity: 1, price: 136.50 }, { quantity: 2, price: 117.00 }, { quantity: 3, price: 97.50 }, { quantity: 5, price: 78.00 }, { quantity: 15, price: 74.10 }, { quantity: 25, price: 71.76 }, { quantity: 50, price: 70.20 }, { quantity: 80, price: 67.86 }, { quantity: 150, price: 66.30 } ] },
+        { name: 'VESTE MI-SAISON FEMME CONFORT', category: 'CYCLISME', type: 'haut', subtype: 'Essentiels et Vestes', pricingGroup: 'vesteMiSaison', techSheetLink: 'https://acrobat.adobe.com/id/urn:aaid:sc:EU:689e6b68-d63d-415d-a691-10c602df3c82', pricingTiers: [ { quantity: 1, price: 136.50 }, { quantity: 2, price: 117.00 }, { quantity: 3, price: 97.50 }, { quantity: 5, price: 78.00 }, { quantity: 15, price: 74.10 }, { quantity: 25, price: 71.76 }, { quantity: 50, price: 70.20 }, { quantity: 80, price: 67.86 }, { quantity: 150, price: 66.30 } ] },
+        { name: 'VESTE MI-SAISON MIXTE CONFORT (membranne coupe-vent + mi-saison)', category: 'CYCLISME', type: 'haut', subtype: 'Essentiels et Vestes', pricingGroup: 'vesteMiSaison', pricingTiers: [ { quantity: 1, price: 136.50 }, { quantity: 2, price: 117.00 }, { quantity: 3, price: 97.50 }, { quantity: 5, price: 78.00 }, { quantity: 15, price: 74.10 }, { quantity: 25, price: 71.76 }, { quantity: 50, price: 70.20 }, { quantity: 80, price: 67.86 }, { quantity: 150, price: 66.30 } ] },
+        { name: 'VESTE MI-SAISON MIXTE CONFORT avec -6cm aux ML', category: 'CYCLISME', type: 'haut', subtype: 'Essentiels et Vestes', pricingGroup: 'vesteMiSaison', pricingTiers: [ { quantity: 1, price: 136.50 }, { quantity: 2, price: 117.00 }, { quantity: 3, price: 97.50 }, { quantity: 5, price: 78.00 }, { quantity: 15, price: 74.10 }, { quantity: 25, price: 71.76 }, { quantity: 50, price: 70.20 }, { quantity: 80, price: 67.86 }, { quantity: 150, price: 66.30 } ] },
+        { name: 'VESTE HIVER HOMME CONFORT', category: 'CYCLISME', type: 'haut', subtype: 'Essentiels et Vestes', pricingGroup: 'vesteHiver', techSheetLink: 'https://acrobat.adobe.com/id/urn:aaid:sc:EU:768a412f-2182-4ef4-927b-b3805ffe8761', pricingTiers: confortWinterJacketTiers },
+        { name: 'VESTE HIVER FEMME CONFORT', category: 'CYCLISME', type: 'haut', subtype: 'Essentiels et Vestes', pricingGroup: 'vesteHiver', techSheetLink: 'https://acrobat.adobe.com/id/urn:aaid:sc:EU:93317f52-8305-460f-bfc3-b2ac0ecb9a45', pricingTiers: confortWinterJacketTiers },
+        { name: 'VESTE HIVER THERMIQUE HOMME CONFORT', category: 'CYCLISME', type: 'haut', subtype: 'Essentiels et Vestes', pricingGroup: 'vesteHiver', techSheetLink: 'https://acrobat.adobe.com/id/urn:aaid:sc:EU:56ab2378-75b1-4760-86df-76c7ad3b66d8', pricingTiers: thermiqueWinterJacketTiers },
+        { name: 'VESTE HIVER THERMIQUE FEMME CONFORT', category: 'CYCLISME', type: 'haut', subtype: 'Essentiels et Vestes', pricingGroup: 'vesteHiver', techSheetLink: 'https://acrobat.adobe.com/id/urn:aaid:sc:EU:5326db9b-b63e-4920-8c55-4e8861d9e8b0', pricingTiers: thermiqueWinterJacketTiers },
+        { name: 'CUISSARD A BRETELLES HOMME CONFORT Peau LANDSCAPE', category: 'CYCLISME', type: 'haut', subtype: 'Cuissards Courts', isCuissardOrCollant: true, pricingGroup: 'cuissardConfortLandscape', sizeType: 'cuissardConfort', techSheetLink: 'https://acrobat.adobe.com/id/urn:aaid:sc:EU:b7868a8f-5c52-498d-81dd-d26bb55c0aaa', chamoisInfo: { name: 'Peau LANDSCAPE', link: 'https://acrobat.adobe.com/id/urn:aaid:sc:EU:2d406e66-798f-44aa-bf83-5861224b93a3' }, pricingTiers: [ { quantity: 1, price: 121.80 }, { quantity: 2, price: 104.40 }, { quantity: 3, price: 87.00 }, { quantity: 5, price: 69.60 }, { quantity: 15, price: 66.12 }, { quantity: 25, price: 64.03 }, { quantity: 50, price: 62.64 }, { quantity: 80, price: 60.55 }, { quantity: 150, price: 59.16 }, ], conseil: conseilCuissard },
+        { name: 'CUISSARD A BRETELLES FEMME CONFORT Peau LANDSCAPE', category: 'CYCLISME', type: 'haut', subtype: 'Cuissards Courts', isCuissardOrCollant: true, pricingGroup: 'cuissardConfortLandscape', sizeType: 'cuissardConfort', techSheetLink: 'https://acrobat.adobe.com/id/urn:aaid:sc:EU:b7868a8f-5c52-498d-81dd-d26bb55c0aaa', chamoisInfo: { name: 'Peau LANDSCAPE', link: 'https://acrobat.adobe.com/id/urn:aaid:sc:EU:8a00d7f0-ab38-4656-a786-77fd645606c0' }, pricingTiers: [ { quantity: 1, price: 121.80 }, { quantity: 2, price: 104.40 }, { quantity: 3, price: 87.00 }, { quantity: 5, price: 69.60 }, { quantity: 15, price: 66.12 }, { quantity: 25, price: 64.03 }, { quantity: 50, price: 62.64 }, { quantity: 80, price: 60.55 }, { quantity: 150, price: 59.16 }, ], conseil: conseilCuissard },
+        { name: 'CUISSARD FEMME SANS BRETELLES CONFORT Peau LANDSCAPE', category: 'CYCLISME', type: 'haut', subtype: 'Cuissards Courts', isCuissardOrCollant: true, pricingGroup: 'cuissardConfortLandscape', sizeType: 'cuissardConfort', techSheetLink: 'https://acrobat.adobe.com/id/urn:aaid:sc:EU:f2e878e2-fdb6-4536-b837-396b3489f99d', chamoisInfo: { name: 'Peau LANDSCAPE', link: 'https://acrobat.adobe.com/id/urn:aaid:sc:EU:8a00d7f0-ab38-4656-a786-77fd645606c0' }, pricingTiers: [ { quantity: 1, price: 117.60 }, { quantity: 2, price: 100.80 }, { quantity: 3, price: 84.00 }, { quantity: 5, price: 67.20 }, { quantity: 15, price: 63.84 }, { quantity: 25, price: 61.82 }, { quantity: 50, price: 60.48 }, { quantity: 80, price: 58.46 }, { quantity: 150, price: 57.12 }, ], conseil: conseilCuissard },
+        { name: 'CUISSARD HOMME AERO Peau CERVINO', category: 'CYCLISME', type: 'haut', subtype: 'Cuissards Courts', sizeType: 'aero', isCuissardOrCollant: true, pricingGroup: 'cuissardAeroCervino', techSheetLink: 'https://acrobat.adobe.com/id/urn:aaid:sc:EU:f1fc53c5-9a3f-4c0f-8b92-5bd05f764f48', chamoisInfo: { name: 'Peau CERVINO', link: 'https://acrobat.adobe.com/id/urn:aaid:sc:EU:9b6f6d83-7726-43ed-8c1b-d3c67c9e3c42' }, pricingTiers: [ { quantity: 1, price: 142.80 }, { quantity: 2, price: 122.40 }, { quantity: 3, price: 102.00 }, { quantity: 5, price: 81.60 }, { quantity: 15, price: 77.52 }, { quantity: 25, price: 75.07 }, { quantity: 50, price: 73.44 }, { quantity: 80, price: 70.99 }, { quantity: 150, price: 69.36 }, ], conseil: conseilCuissard },
+        { name: 'CUISSARD FEMME AERO Peau CERVINO', category: 'CYCLISME', type: 'haut', subtype: 'Cuissards Courts', sizeType: 'aero', isCuissardOrCollant: true, pricingGroup: 'cuissardAeroCervino', techSheetLink: 'https://acrobat.adobe.com/id/urn:aaid:sc:EU:f1fc53c5-9a3f-4c0f-8b92-5bd05f764f48', chamoisInfo: { name: 'Peau CERVINO', link: 'https://acrobat.adobe.com/id/urn:aaid:sc:EU:3cad08d0-732f-465a-8f34-8c61898e0579' }, pricingTiers: [ { quantity: 1, price: 142.80 }, { quantity: 2, price: 122.40 }, { quantity: 3, price: 102.00 }, { quantity: 5, price: 81.60 }, { quantity: 15, price: 77.52 }, { quantity: 25, price: 75.07 }, { quantity: 50, price: 73.44 }, { quantity: 80, price: 70.99 }, { quantity: 150, price: 69.36 }, ], conseil: conseilCuissard },
+        { name: 'SHORT VTT FOND Peau ENDURANCE 2.5', category: 'CYCLISME', type: 'haut', subtype: 'Cuissards Courts', isCuissardOrCollant: true, techSheetLink: 'https://acrobat.adobe.com/id/urn:aaid:sc:EU:3502afda-fc68-4fdf-ae4c-1847ef3c4c87', pricingTiers: [ { quantity: 1, price: 75.00 } ] },
+        { name: 'CORSAIRE HOMME A BRETELLES CONFORT', category: 'CYCLISME', type: 'haut', subtype: 'Corsaires/Collants', sizeType: 'ample', isCuissardOrCollant: true, pricingGroup: 'corsaireConfortLandscape', techSheetLink: 'https://acrobat.adobe.com/id/urn:aaid:sc:EU:2fecf5d7-61eb-41af-938e-4e3fc7d72a25', pricingTiers: [ { quantity: 1, price: 79.20 }, { quantity: 2, price: 79.20 }, { quantity: 3, price: 79.20 }, { quantity: 5, price: 79.20 }, { quantity: 15, price: 75.24 }, { quantity: 25, price: 72.86 }, { quantity: 50, price: 71.28 }, { quantity: 80, price: 68.90 }, { quantity: 150, price: 67.32 } ] },
+        { name: 'CORSAIRE FEMME SANS BRETELLES CONFORT', category: 'CYCLISME', type: 'haut', subtype: 'Corsaires/Collants', sizeType: 'ample', isCuissardOrCollant: true, pricingGroup: 'corsaireConfortLandscape', techSheetLink: 'https://acrobat.adobe.com/id/urn:aaid:sc:EU:876b9e39-98de-4726-8fc4-afd0bbf4f973', pricingTiers: [ { quantity: 1, price: 76.80 }, { quantity: 2, price: 76.80 }, { quantity: 3, price: 76.80 }, { quantity: 5, price: 73.00 }, { quantity: 15, price: 72.96 }, { quantity: 25, price: 70.66 }, { quantity: 50, price: 69.12 }, { quantity: 80, price: 66.82 }, { quantity: 150, price: 65.28 } ] },
+        { name: 'COLLANT HIVER A BRETELLES HOMME CONFORT', category: 'CYCLISME', type: 'haut', subtype: 'Corsaires/Collants', sizeType: 'ample', isCuissardOrCollant: true, pricingGroup: 'collantHiverConfortLandscape', pricingTiers: [ { quantity: 1, price: 138.60 }, { quantity: 2, price: 118.80 }, { quantity: 3, price: 99.00 }, { quantity: 5, price: 79.20 }, { quantity: 15, price: 75.24 }, { quantity: 25, price: 72.86 }, { quantity: 50, price: 71.28 }, { quantity: 80, price: 68.90 }, { quantity: 150, price: 67.32 }, ] },
+        { name: 'COLLANT HIVER A BRETELLES FEMME CONFORT', category: 'CYCLISME', type: 'haut', subtype: 'Corsaires/Collants', sizeType: 'ample', isCuissardOrCollant: true, pricingGroup: 'collantHiverConfortLandscape', pricingTiers: [ { quantity: 1, price: 138.60 }, { quantity: 2, price: 118.80 }, { quantity: 3, price: 99.00 }, { quantity: 5, price: 79.20 }, { quantity: 15, price: 75.24 }, { quantity: 25, price: 72.86 }, { quantity: 50, price: 71.28 }, { quantity: 80, price: 68.90 }, { quantity: 150, price: 67.32 }, ] },
+        { name: 'COLLANT HIVER FEMME SANS BRETELLES CONFORT', category: 'CYCLISME', type: 'haut', subtype: 'Corsaires/Collants', sizeType: 'ample', isCuissardOrCollant: true, pricingGroup: 'collantHiverConfortLandscape', pricingTiers: [ { quantity: 1, price: 134.40 }, { quantity: 2, price: 115.20 }, { quantity: 3, price: 96.00 }, { quantity: 5, price: 76.80 }, { quantity: 15, price: 72.96 }, { quantity: 25, price: 70.66 }, { quantity: 50, price: 69.12 }, { quantity: 80, price: 66.82 }, { quantity: 150, price: 65.28 }, ] },
+        { name: 'COLLANT HIVER HOMME AERO Peau CERVINO', category: 'CYCLISME', type: 'haut', subtype: 'Corsaires/Collants', pricingGroup: 'collantHiverAeroCervino', sizeType: 'aero', isCuissardOrCollant: true, techSheetLink: 'https://acrobat.adobe.com/id/urn:aaid:sc:EU:1c051cec-30e2-45c9-84c5-6aaaf8b0a344', chamoisInfo: { name: 'Peau CERVINO', link: 'https://acrobat.adobe.com/id/urn:aaid:sc:EU:9b6f6d83-7726-43ed-8c1b-d3c67c9e3c42' }, pricingTiers: [ { quantity: 1, price: 165.90 }, { quantity: 2, price: 142.20 }, { quantity: 3, price: 118.50 }, { quantity: 5, price: 94.80 }, { quantity: 15, price: 90.06 }, { quantity: 25, price: 87.22 }, { quantity: 50, price: 85.32 }, { quantity: 80, price: 82.48 }, { quantity: 150, price: 80.58 }, ], conseil: conseilCuissard },
+        { name: 'COLLANT HIVER FEMME AERO Peau CERVINO', category: 'CYCLISME', type: 'haut', subtype: 'Corsaires/Collants', pricingGroup: 'collantHiverAeroCervino', sizeType: 'aero', isCuissardOrCollant: true, techSheetLink: 'https://acrobat.adobe.com/id/urn:aaid:sc:EU:1c051cec-30e2-45c9-84c5-6aaaf8b0a344', chamoisInfo: { name: 'Peau CERVINO', link: 'https://acrobat.adobe.com/id/urn:aaid:sc:EU:3cad08d0-732f-465a-8f34-8c61898e0579' }, pricingTiers: [ { quantity: 1, price: 165.90 }, { quantity: 2, price: 142.20 }, { quantity: 3, price: 118.50 }, { quantity: 5, price: 94.80 }, { quantity: 15, price: 90.06 }, { quantity: 25, price: 87.22 }, { quantity: 50, price: 85.32 }, { quantity: 80, price: 82.48 }, { quantity: 150, price: 80.58 }, ], conseil: conseilCuissard },
+        { name: 'COLLANT MIXTE ECHAUFFEMENT', category: 'CYCLISME', type: 'haut', subtype: 'Corsaires/Collants', sizeType: 'ample', isCuissardOrCollant: true, techSheetLink: 'https://acrobat.adobe.com/id/urn:aaid:sc:EU:7b607522-6b8e-45ea-b4ca-ca4f404bfffd', pricingTiers: [ { quantity: 1, price: 98.70 }, { quantity: 2, price: 84.60 }, { quantity: 3, price: 70.50 }, { quantity: 5, price: 56.40 }, { quantity: 15, price: 53.58 }, { quantity: 25, price: 51.89 }, { quantity: 50, price: 50.76 }, { quantity: 80, price: 49.07 }, { quantity: 150, price: 47.94 }, ] },
+        { name: 'COMBINAISON ROUTE MANCHES COURTES HOMME AERO', category: 'CYCLISME', type: 'haut', subtype: 'Combinaisons', sizeType: 'aero', techSheetLink: 'https://acrobat.adobe.com/id/urn:aaid:sc:EU:232568c6-45d3-47ce-9843-c17ac546d87e', pricingTiers: [{ quantity: 1, price: 115.20 }] },
+        { name: 'COMBINAISON ROUTE MANCHES COURTES FEMME AERO', category: 'CYCLISME', type: 'haut', subtype: 'Combinaisons', sizeType: 'aero', techSheetLink: 'https://acrobat.adobe.com/id/urn:aaid:sc:EU:232568c6-45d3-47ce-9843-c17ac546d87e', pricingTiers: [{ quantity: 1, price: 115.20 }] },
+        { name: 'COMBINAISON CHRONO ROUTE MANCHES COURTES HOMME AERO', category: 'CYCLISME', type: 'haut', subtype: 'Combinaisons', sizeType: 'aero', pricingTiers: [{ quantity: 1, price: 115.20 }] },
+        { name: 'COMBINAISON CHRONO ROUTE MANCHES COURTES FEMME AERO', category: 'CYCLISME', type: 'haut', subtype: 'Combinaisons', sizeType: 'aero', pricingTiers: [{ quantity: 1, price: 115.20 }] },
+        { name: 'COMBINAISON CYCLOCROSS/VTT MANCHES LONGUES MIXTE AERO', category: 'CYCLISME', type: 'haut', subtype: 'Combinaisons', sizeType: 'aero', techSheetLink: 'https://acrobat.adobe.com/id/urn:aaid:sc:EU:81a79859-bb47-49d7-8491-031f08e80556', pricingTiers: [{ quantity: 1, price: 115.20 }] },
+        { name: 'MAILLOT RUNNING MIXTE MANCHES COURTES', category: 'RUNNING', type: 'haut', subtype: 'Hauts', pricingGroup: 'maillotRunning', excludedOptions: ['POCHE DOS ZIPPEE'], pricingTiers: [ { quantity: 1, price: 79.80 }, { quantity: 2, price: 68.40 }, { quantity: 3, price: 57.00 }, { quantity: 5, price: 45.60 }, { quantity: 15, price: 43.32 }, { quantity: 25, price: 41.95 }, { quantity: 50, price: 41.04 }, { quantity: 80, price: 39.67 }, { quantity: 150, price: 38.76 } ] },
+        { name: 'DEBARDEUR RUNNING MIXTE', category: 'RUNNING', type: 'haut', subtype: 'Hauts', pricingGroup: 'debardeurRunning', excludedOptions: ['POCHE DOS ZIPPEE'], pricingTiers: [ { quantity: 1, price: 79.80 }, { quantity: 2, price: 68.40 }, { quantity: 3, price: 57.00 }, { quantity: 5, price: 45.60 }, { quantity: 15, price: 43.32 }, { quantity: 25, price: 41.95 }, { quantity: 50, price: 41.04 }, { quantity: 80, price: 39.67 }, { quantity: 150, price: 38.76 } ] },
+        { name: 'MAILLOT RUNNING HIVER HOMME MANCHES LONGUES', category: 'RUNNING', type: 'haut', subtype: 'Hauts', pricingGroup: 'maillotRunningHiver', excludedOptions: ['POCHE DOS ZIPPEE'], pricingTiers: [ { quantity: 1, price: 94.50 }, { quantity: 2, price: 81.00 }, { quantity: 3, price: 67.50 }, { quantity: 5, price: 54.00 }, { quantity: 15, price: 51.30 }, { quantity: 25, price: 49.68 }, { quantity: 50, price: 48.60 }, { quantity: 80, price: 46.98 }, { quantity: 150, price: 45.90 } ] },
+        { name: 'MAILLOT RUNNING HIVER FEMME MANCHES LONGUES', category: 'RUNNING', type: 'haut', subtype: 'Hauts', pricingGroup: 'maillotRunningHiver', excludedOptions: ['POCHE DOS ZIPPEE'], pricingTiers: [ { quantity: 1, price: 94.50 }, { quantity: 2, price: 81.00 }, { quantity: 3, price: 67.50 }, { quantity: 5, price: 54.00 }, { quantity: 15, price: 51.30 }, { quantity: 25, price: 49.68 }, { quantity: 50, price: 48.60 }, { quantity: 80, price: 46.98 }, { quantity: 150, price: 45.90 } ] },
+        { name: 'COUPE-VENT LEGER MIXTE CONFORT', category: 'RUNNING', type: 'haut', subtype: 'Hauts', excludedOptions: ['POCHE DOS ZIPPEE'], techSheetLink: 'https://acrobat.adobe.com/id/urn:aaid:sc:EU:1c71ad46-5363-43b0-8051-ba153ccf7a53', pricingTiers: [ { quantity: 1, price: 96.60 }, { quantity: 2, price: 82.80 }, { quantity: 3, price: 69.00 }, { quantity: 5, price: 55.20 }, { quantity: 15, price: 52.44 }, { quantity: 25, price: 50.78 }, { quantity: 50, price: 49.68 }, { quantity: 80, price: 48.02 }, { quantity: 150, price: 46.92 } ] },
+        { name: 'VESTE MI-SAISON HOMME CONFORT', category: 'RUNNING', type: 'haut', subtype: 'Hauts', techSheetLink: 'https://acrobat.adobe.com/id/urn:aaid:sc:EU:264e626b-2bc5-4781-8d39-57084c462a4c', pricingTiers: [ { quantity: 1, price: 136.50 }, { quantity: 2, price: 117.00 }, { quantity: 3, price: 97.50 }, { quantity: 5, price: 78.00 }, { quantity: 15, price: 74.10 }, { quantity: 25, price: 71.76 }, { quantity: 50, price: 70.20 }, { quantity: 80, price: 67.86 }, { quantity: 150, price: 66.30 } ] },
+        { name: 'VESTE MI-SAISON FEMME CONFORT', category: 'RUNNING', type: 'haut', subtype: 'Hauts', techSheetLink: 'https://acrobat.adobe.com/id/urn:aaid:sc:EU:689e6b68-d63d-415d-a691-10c602df3c82', pricingTiers: [ { quantity: 1, price: 136.50 }, { quantity: 2, price: 117.00 }, { quantity: 3, price: 97.50 }, { quantity: 5, price: 78.00 }, { quantity: 15, price: 74.10 }, { quantity: 25, price: 71.76 }, { quantity: 50, price: 70.20 }, { quantity: 80, price: 67.86 }, { quantity: 150, price: 66.30 } ] },
+        { name: 'GILET COUPE-VENT LEGER MIXTE (vent et pluie fine, sans poche dos)', category: 'RUNNING', type: 'haut', subtype: 'Hauts', pricingGroup: 'giletCoupeVent', excludedOptions: ['POCHE DOS ZIPPEE'], techSheetLink: 'https://acrobat.adobe.com/id/urn:aaid:sc:EU:e33e2526-748d-45b9-9caa-ade12d3a0059', pricingTiers: [ { quantity: 1, price: 72.45 }, { quantity: 2, price: 62.10 }, { quantity: 3, price: 51.75 }, { quantity: 5, price: 41.40 }, { quantity: 15, price: 39.33 }, { quantity: 25, price: 38.09 }, { quantity: 50, price: 37.26 }, { quantity: 80, price: 36.02 }, { quantity: 150, price: 35.19 } ] },
+        { name: 'GILET COUPE-VENT MI-SAISON MIXTE (dos ajouré)', category: 'RUNNING', type: 'haut', subtype: 'Hauts', pricingGroup: 'giletCoupeVent', excludedOptions: ['POCHE DOS ZIPPEE'], techSheetLink: 'https://acrobat.adobe.com/id/urn:aaid:sc:EU:f155520b-2268-404b-9491-37b228a72ae7', pricingTiers: [ { quantity: 1, price: 91.35 }, { quantity: 2, price: 78.30 }, { quantity: 3, price: 65.25 }, { quantity: 5, price: 52.20 }, { quantity: 15, price: 49.59 }, { quantity: 25, price: 48.02 }, { quantity: 50, price: 46.98 }, { quantity: 80, price: 45.41 }, { quantity: 150, price: 44.37 } ] },
+        { name: 'GILET COUPE-VENT HIVER MIXTE (tout membranné)', category: 'RUNNING', type: 'haut', subtype: 'Hauts', pricingGroup: 'giletCoupeVent', excludedOptions: ['POCHE DOS ZIPPEE'], techSheetLink: 'https://acrobat.adobe.com/id/urn:aaid:sc:EU:d4ac0624-a655-4a27-b02d-2a00460fcd0b', pricingTiers: [ { quantity: 1, price: 97.65 }, { quantity: 2, price: 83.70 }, { quantity: 3, price: 69.75 }, { quantity: 5, price: 55.80 }, { quantity: 15, price: 53.01 }, { quantity: 25, price: 51.34 }, { quantity: 50, price: 50.22 }, { quantity: 80, price: 48.55 }, { quantity: 150, price: 47.43 } ] },
+        { name: 'GILET RUNNING COUPE-VENT LEGER MIXTE', category: 'RUNNING', type: 'haut', subtype: 'Hauts', pricingGroup: 'giletCoupeVent', excludedOptions: ['POCHE DOS ZIPPEE'], pricingTiers: [ { quantity: 1, price: 72.45 }, { quantity: 2, price: 62.10 }, { quantity: 3, price: 51.75 }, { quantity: 5, price: 41.40 }, { quantity: 15, price: 39.33 }, { quantity: 25, price: 38.09 }, { quantity: 50, price: 37.26 }, { quantity: 80, price: 36.02 }, { quantity: 150, price: 35.19 } ] },
+        { name: 'GILET RUNNING COUPE-VENT MI-SAISON MIXTE', category: 'RUNNING', type: 'haut', subtype: 'Hauts', pricingGroup: 'giletCoupeVent', excludedOptions: ['POCHE DOS ZIPPEE'], pricingTiers: [ { quantity: 1, price: 91.35 }, { quantity: 2, price: 78.30 }, { quantity: 3, price: 65.25 }, { quantity: 5, price: 52.20 }, { quantity: 15, price: 49.59 }, { quantity: 25, price: 48.02 }, { quantity: 50, price: 46.98 }, { quantity: 80, price: 45.41 }, { quantity: 150, price: 44.37 } ] },
+        { name: 'GILET RUNNING COUPE-VENT HIVER MIXTE', category: 'RUNNING', type: 'haut', subtype: 'Hauts', pricingGroup: 'giletCoupeVent', excludedOptions: ['POCHE DOS ZIPPEE'], pricingTiers: [ { quantity: 1, price: 97.65 }, { quantity: 2, price: 83.70 }, { quantity: 3, price: 69.75 }, { quantity: 5, price: 55.80 }, { quantity: 15, price: 53.01 }, { quantity: 25, price: 51.34 }, { quantity: 50, price: 50.22 }, { quantity: 80, price: 48.55 }, { quantity: 150, price: 47.43 } ] },
+        { name: 'SHORT RUNNING MIXTE', category: 'RUNNING', type: 'haut', subtype: 'Bas', excludedOptions: ['POCHE DOS ZIPPEE'], pricingTiers: [ { quantity: 1, price: 79.80 }, { quantity: 2, price: 68.40 }, { quantity: 3, price: 57.00 }, { quantity: 5, price: 45.60 }, { quantity: 15, price: 43.32 }, { quantity: 25, price: 41.95 }, { quantity: 50, price: 41.04 }, { quantity: 80, price: 39.67 }, { quantity: 150, price: 38.76 } ] },
+        { name: 'SPRINTER RUNNING MIXTE', category: 'RUNNING', type: 'haut', subtype: 'Bas', excludedOptions: ['POCHE DOS ZIPPEE'], pricingTiers: [ { quantity: 1, price: 85.80 }, { quantity: 2, price: 73.50 }, { quantity: 3, price: 61.25 }, { quantity: 5, price: 49.00 }, { quantity: 15, price: 46.55 }, { quantity: 25, price: 45.08 }, { quantity: 50, price: 44.10 }, { quantity: 80, price: 42.64 }, { quantity: 150, price: 41.65 } ] },
+        { name: 'COLLANT RUNNING HIVER MIXTE', category: 'RUNNING', type: 'haut', subtype: 'Bas', excludedOptions: ['POCHE DOS ZIPPEE'], pricingTiers: [ { quantity: 1, price: 138.60 }, { quantity: 2, price: 118.80 }, { quantity: 3, price: 99.00 }, { quantity: 5, price: 79.20 }, { quantity: 15, price: 75.24 }, { quantity: 25, price: 72.86 }, { quantity: 50, price: 71.28 }, { quantity: 80, price: 68.90 }, { quantity: 150, price: 67.32 } ] },
+        { name: 'TRIFONCTION AERO HOMME', category: 'RUNNING', type: 'haut', subtype: 'Trifonctions', sizeType: 'aero', price: 172.80 },
+        { name: 'TRIFONCTION AERO FEMME', category: 'RUNNING', type: 'haut', subtype: 'Trifonctions', sizeType: 'aero', price: 172.80 },
+        { name: 'option', name: 'POCHE DOS ZIPPEE', category: 'option', fixedPriceTTC: 7.20 },
+        { name: 'option', name: 'FLOCAGE NOM PRENOM', category: 'option', fixedPriceTTC: 6.00 },
+        { name: 'option', name: 'Ajustement Longueur +4cm', category: 'option', optionGroup: 'length', fixedPriceTTC: 6.00 },
+        { name: 'option', name: 'Ajustement Longueur -4cm', category: 'option', optionGroup: 'length', fixedPriceTTC: 6.00 },
+        { name: 'option', name: 'Ajustement Longueur -6cm', category: 'option', optionGroup: 'length', fixedPriceTTC: 6.00 },
+        { name: 'GANTS ETE', category: 'ACCESSOIRES', type: 'accessoire', subtype: 'ACCESSOIRES PERSONNALISÉS', minQuantity: 50, pricingTiers: [{ quantity: 50, price: 28.80 }] },
+        { name: 'GANTS MI-SAISON', category: 'ACCESSOIRES', type: 'accessoire', subtype: 'ACCESSOIRES PERSONNALISÉS', minQuantity: 50, pricingTiers: [{ quantity: 50, price: 33.60 }] },
+        { name: 'GANTS HIVER', category: 'ACCESSOIRES', type: 'accessoire', subtype: 'ACCESSOIRES PERSONNALISÉS', minQuantity: 50, pricingTiers: [{ quantity: 50, price: 36.00 }] },
+        { name: 'MANCHETTES', category: 'ACCESSOIRES', type: 'accessoire', subtype: 'ACCESSOIRES PERSONNALISÉS', minQuantity: 20, pricingTiers: [{ quantity: 20, price: 27.60 }, { quantity: 50, price: 24.00 }] },
+        { name: 'JAMBIERES', category: 'ACCESSOIRES', type: 'accessoire', subtype: 'ACCESSOIRES PERSONNALISÉS', minQuantity: 20, pricingTiers: [{ quantity: 20, price: 36.00 }, { quantity: 50, price: 30.00 }] },
+        { name: 'GENOUILLERES', category: 'ACCESSOIRES', type: 'accessoire', subtype: 'ACCESSOIRES PERSONNALISÉS', minQuantity: 20, pricingTiers: [{ quantity: 20, price: 30.00 }, { quantity: 50, price: 27.60 }] },
+        { name: 'CHAUSSETTES AERO', category: 'ACCESSOIRES', type: 'accessoire', subtype: 'ACCESSOIRES PERSONNALISÉS', sizeType: 'chaussettes', minQuantity: 30, pricingTiers: [{ quantity: 30, price: 26.40 }, { quantity: 50, price: 22.80 }] },
+        { name: 'CHAUSSETTES SUBLIMEES', category: 'ACCESSOIRES', type: 'accessoire', subtype: 'ACCESSOIRES PERSONNALISÉS', sizeType: 'chaussettes', minQuantity: 30, pricingTiers: [{ quantity: 30, price: 18.00 }, { quantity: 50, price: 15.60 }] },
+        { name: 'SUR-CHAUSSURES', category: 'ACCESSOIRES', type: 'accessoire', subtype: 'ACCESSOIRES PERSONNALISÉS', minQuantity: 20, pricingTiers: [{ quantity: 20, price: 33.60 }, { quantity: 50, price: 28.80 }] },
+        { name: 'CASQUETTE CYCLISTE', category: 'ACCESSOIRES', type: 'accessoire', subtype: 'ACCESSOIRES PERSONNALISÉS', minQuantity: 30, pricingTiers: [{ quantity: 30, price: 21.60 }, { quantity: 50, price: 18.00 }] },
+        { name: 'BONNET SOUS CASQUE', category: 'ACCESSOIRES', type: 'accessoire', subtype: 'ACCESSOIRES PERSONNALISÉS', minQuantity: 30, pricingTiers: [{ quantity: 30, price: 21.60 }, { quantity: 50, price: 18.00 }] },
+        { name: 'TOUR DE COU', category: 'ACCESSOIRES', type: 'accessoire', subtype: 'ACCESSOIRES PERSONNALISÉS', minQuantity: 30, pricingTiers: [{ quantity: 30, price: 18.00 }, { quantity: 50, price: 14.40 }] },
+        { name: 'MUSETE', category: 'ACCESSOIRES', type: 'accessoire', subtype: 'ACCESSOIRES PERSONNALISÉS', minQuantity: 30, pricingTiers: [{ quantity: 30, price: 18.00 }, { quantity: 50, price: 15.60 }] },
+        { name: 'BIDONS 500ML', category: 'ACCESSOIRES', type: 'accessoire', subtype: 'ACCESSOIRES PERMANENTS', price: 6.60, colors: ["TRANSPARENT", "BLANC", "NOIR", "JAUNE FLUO", "ORANGE", "ROUGE", "VERT", "BLEU"]},
+        { name: 'BIDONS 750ML', category: 'ACCESSOIRES', type: 'accessoire', subtype: 'ACCESSOIRES PERMANENTS', price: 7.80, colors: ["TRANSPARENT", "BLANC", "NOIR", "JAUNE FLUO", "ORANGE", "ROUGE", "VERT", "BLEU"]},
+        { name: 'CHAUSSETTES MI-HAUTES', category: 'ACCESSOIRES', type: 'accessoire', subtype: 'ACCESSOIRES PERMANENTS', sizeType: 'chaussettes', price: 17, colors: ["NOIR", "BLANC", "BEIGE", "BRETON PUR BEURRE"]},
+        { name: 'MAILLOT ENFANT PERFORMANCE MC', category: 'ENFANTS', type: 'enfant', subtype: 'Cyclisme Enfant', sizeType: 'enfant', hasOptions: false, price: 42.00, techSheetLink: 'https://acrobat.adobe.com/id/urn:aaid:sc:EU:9a9217a7-81e3-4ec1-a717-a066b06219b2' },
+        { name: 'MAILLOT BMX ENFANT CONFORT ML', category: 'ENFANTS', type: 'enfant', subtype: 'Cyclisme Enfant', sizeType: 'enfant', hasOptions: false, price: 45.60, techSheetLink: 'https://acrobat.adobe.com/id/urn:aaid:sc:EU:c12f4446-f720-4088-ac99-2cd6686dafd5' },
+        { name: 'MAILLOT MI-SAISON ENFANT CONFORT ML', category: 'ENFANTS', type: 'enfant', subtype: 'Cyclisme Enfant', sizeType: 'enfant', hasOptions: false, price: 45.60, techSheetLink: 'https://acrobat.adobe.com/id/urn:aaid:sc:EU:ec6bb336-9d52-46a9-bb70-745d41f2d996' },
+        { name: 'GILET COUPE-VENT LEGER ENFANT', category: 'ENFANTS', type: 'enfant', subtype: 'Cyclisme Enfant', sizeType: 'enfant', hasOptions: false, price: 38.40, techSheetLink: 'https://acrobat.adobe.com/id/urn:aaid:sc:EU:b0f1b1ce-aac5-49b3-9609-ba0c705f723e' },
+        { name: 'VESTE HIVER ENFANT CONFORT', category: 'ENFANTS', type: 'enfant', subtype: 'Cyclisme Enfant', sizeType: 'enfant', hasOptions: false, price: 84.00, techSheetLink: 'https://acrobat.adobe.com/id/urn:aaid:sc:EU:f906cd17-b2d7-42da-b938-11a95a5e1cae' },
+        { name: 'CUISSARD ENFANT CONFORT', category: 'ENFANTS', type: 'enfant', subtype: 'Cyclisme Enfant', sizeType: 'enfant', hasOptions: false, price: 42.00, techSheetLink: 'https://acrobat.adobe.com/id/urn:aaid:sc:EU:3279f8a5-33cf-4b91-a778-a6036f037ff8' },
+        { name: 'COLLANT HIVER ENFANT SUBLIME CONFORT', category: 'ENFANTS', type: 'enfant', subtype: 'Cyclisme Enfant', sizeType: 'enfant', hasOptions: false, price: 60.00 },
+        { name: 'COLLANT ENFANT VELOURS ECHAUFFEMENT', category: 'ENFANTS', type: 'enfant', subtype: 'Cyclisme Enfant', sizeType: 'enfant', hasOptions: false, price: 49.80 },
+        { name: 'MAILLOT RUNNING ENFANT MANCHES COURTES', category: 'ENFANTS', type: 'enfant', subtype: 'Running Enfants', sizeType: 'enfant', hasOptions: false, price: 30.00 },
+        { name: 'DEBARDEUR RUNNING ENFANT', category: 'ENFANTS', type: 'enfant', subtype: 'Running Enfants', sizeType: 'enfant', hasOptions: false, price: 30.00 },
+    ];
+        const productMap = new Map(allAvailableProducts.map(p => [p.name, p]));
+        
+        // --- DOM ELEMENTS ---
+        const clubNameInput = document.getElementById('club-name-input');
+        const customCreationCheck = document.getElementById('custom-creation-check');
+        const devisModeCheck = document.getElementById('devis-mode-check');
+        const gammeClubModeCheck = document.getElementById('gamme-club-mode-check');
+        const maquetteLinkContainer = document.getElementById('maquette-link-container');
+        const maquetteLinkInput = document.getElementById('maquette-link-input');
+        const categoryFiltersContainer = document.getElementById('category-filters');
+        const productGrid = document.getElementById('product-grid');
+        const summaryBar = document.getElementById('summary-bar');
+        const alertModal = document.getElementById('alert-modal');
+        let alertModalCloseBtn = document.getElementById('alert-modal-close-btn');
+        const alertModalTitle = document.getElementById('alert-modal-title');
+        const alertModalBody = document.getElementById('alert-modal-body');
+        const conseilModal = document.getElementById('conseil-modal');
+        const conseilModalCloseBtn = document.getElementById('conseil-modal-close-btn');
+        const conseilModalTitle = document.getElementById('conseil-modal-title');
+        const conseilModalBody = document.getElementById('conseil-modal-body');
+        const tariffModal = document.getElementById('tariff-modal');
+        const tariffModalCloseBtn = document.getElementById('tariff-modal-close-btn');
+        const tariffModalBody = document.getElementById('tariff-modal-body');
+        const generalTariffBtn = document.getElementById('general-tariff-btn');
+        
+        const pdfSelectionModal = document.getElementById('pdf-selection-modal');
+        const pdfSelectionList = document.getElementById('pdf-selection-list');
+        const pdfSelectionCancelBtn = document.getElementById('pdf-selection-cancel-btn');
+        const pdfSelectAllBtn = document.getElementById('pdf-select-all-btn');
+        const pdfDeselectAllBtn = document.getElementById('pdf-deselect-all-btn');
+        const pdfSelectionConfirmBtn = document.getElementById('pdf-selection-confirm-btn');
 
-        const sortLineItems = (items) => {
-            return [...items].sort((a, b) => {
-                const productAOrder = productSortOrderMap.get(a.productName) ?? 9999;
-                const productBOrder = productSortOrderMap.get(b.productName) ?? 9999;
-                return productAOrder - productBOrder;
-            });
-        };
-
-        const sortSizeKeys = (sizeKeys) => {
-            return [...sizeKeys].sort((a, b) => {
-                const sizeAOrder = sizeSortOrderMap.get(a) ?? 999;
-                const sizeBOrder = sizeSortOrderMap.get(b) ?? 999;
-                return sizeAOrder - sizeBOrder;
-            });
-        };
-
-
+        // =================================================================================
         // --- APPLICATION STATE ---
-        let state = {
-            isGeneratingSpecificity: false, isSaving: false, activeTab: 'order-creation',
-            isSavedOrdersTabLocked: true, savedOrders: [],
-            excelColumns: {
-                licencie: true, produit: true, specificite: true, options: true,
-                tailles: true, qte: true, prixUHT: true, prixUTTC: true,
-                totalHT: true, totalTTC: true, remise: true, geste: true
-            },
-            orderId: null, isOrderValidated: false, isReassort: false,
-            isCustomDesignOrder: false, isStoreOrder: false, applyDiscount: false,
-            clubName: '', departement: '', clientNumber: '', preOrderNumber: '',
-            quoteNumber: '', orderDate: new Date().toISOString().split('T')[0],
-            licencieName: '', clubDiscount: 0, currentOrderLineItems: [],
-            discountType: 'global', orderScope: 'global', documentType: 'order',
-            orderSpecificity: '', isImperatif: false, imperatifNote: '',
-            currentProduct: '', applyCommercialGesture: false, currentQuantities: {},
-            currentCalculatedUnitPrice: 0, manualUnitPrice: '', currentSelectedOptions: [],
-            currentSpecificity: '', currentAccessoryQuantity: '', currentColor: '',
+        // =================================================================================
+        let quoteState = {
+            items: {}, 
+            clubName: '',
+            customCreation: false,
+            devisMode: false,
+            gammeClubMode: false,
+            maquetteLink: ''
         };
+        let pdfConfirmCallback = null;
+        
+        const groupColors = {};
+        (() => {
+            const colors = ['#fecaca', '#fed7aa', '#fef08a', '#d9f99d', '#bfdbfe', '#e9d5ff', '#fbcfe8', '#fce7f3', '#ccfbf1', '#dcfce7'];
+            let colorIndex = 0;
+            allAvailableProducts.forEach(product => {
+                if (product.pricingGroup && !groupColors[product.pricingGroup]) {
+                    groupColors[product.pricingGroup] = colors[colorIndex % colors.length];
+                    colorIndex++;
+                }
+            });
+        })();
 
-        // --- DOM Element References ---
-        const dom = {
-            mainModal: document.getElementById('main-modal'),
-            mainModalTitle: document.getElementById('main-modal-title'),
-            mainModalBody: document.getElementById('main-modal-body'),
-            mainModalActions: document.getElementById('main-modal-actions'),
-            excelModal: document.getElementById('excel-modal'),
-            excelColumnsContainer: document.getElementById('excel-columns-container'),
-            docTypeOrderRadio: document.getElementById('doc-type-order'),
-            docTypeQuoteRadio: document.getElementById('doc-type-quote'),
-            docTypeReassortCheck: document.getElementById('doc-type-reassort'),
-            customDesignOrderCheck: document.getElementById('custom-design-order-check'),
-            orderScopeContainer: document.getElementById('order-scope-container'),
-            scopeGlobalRadio: document.getElementById('scope-global'),
-            scopeLicenseeRadio: document.getElementById('scope-licensee'),
-            storeOrderCheck: document.getElementById('store-order-check'),
-            applyDiscountCheck: document.getElementById('apply-discount-check'),
-            clubName: document.getElementById('clubName'),
-            departement: document.getElementById('departement'),
-            clientNumber: document.getElementById('clientNumber'),
-            preOrderNumberContainer: document.getElementById('pre-order-number-container'),
-            preOrderNumber: document.getElementById('preOrderNumber'),
-            quoteNumberContainer: document.getElementById('quote-number-container'),
-            quoteNumber: document.getElementById('quoteNumber'),
-            orderDate: document.getElementById('orderDate'),
-            orderSpecificity: document.getElementById('orderSpecificity'),
-            licencieNameContainer: document.getElementById('licencieName-container'),
-            licencieName: document.getElementById('licencieName'),
-            imperatifCheck: document.getElementById('imperatif-check'),
-            imperatifNoteContainer: document.getElementById('imperatif-note-container'),
-            imperatifNote: document.getElementById('imperatif-note'),
-            productTabsContainer: document.getElementById('product-tabs-container'),
-            productFormContainer: document.getElementById('product-form-container'),
-            mainTabsContainer: document.getElementById('main-tabs-container'),
-            orderCreationTabContent: document.getElementById('order-creation'),
-            savedOrdersTabContent: document.getElementById('saved-orders'),
-            savedOrdersList: document.getElementById('saved-orders-list'),
-            importOrdersJsonBtn: document.getElementById('import-orders-json-btn'),
-            exportOrdersJsonBtn: document.getElementById('export-orders-json-btn'),
-            jsonOrdersFileInput: document.getElementById('json-orders-file-input'),
-            orderTableBody: document.getElementById('order-table-body'),
-            orderTableHead: document.getElementById('order-table-head'),
-            totalArticlesDisplay: document.getElementById('total-articles-display'),
-            discountControlsContainer: document.getElementById('discount-controls-container'),
-            discountGlobalRadio: document.getElementById('discount-global'),
-            discountItemRadio: document.getElementById('discount-item'),
-            clubDiscount: document.getElementById('clubDiscount'),
-            subtotalHT: document.getElementById('subtotal-ht'),
-            subtotalTTC: document.getElementById('subtotal-ttc'),
-            discountAmountHT: document.getElementById('discount-amount-ht'),
-            discountAmountTTC: document.getElementById('discount-amount-ttc'),
-            graphicFeeHtRow: document.getElementById('graphic-fee-ht-row'),
-            graphicFeeTtcRow: document.getElementById('graphic-fee-ttc-row'),
-            graphicDesignFeeHT: document.getElementById('graphic-design-fee-ht'),
-            graphicDesignFeeTTC: document.getElementById('graphic-design-fee-ttc'),
-            shippingHT: document.getElementById('shipping-ht'),
-            shippingTTC: document.getElementById('shipping-ttc'),
-            grandTotalHT: document.getElementById('grand-total-ht'),
-            grandTotalTTC: document.getElementById('grand-total-ttc'),
-            downPaymentLabel: document.getElementById('down-payment-label'),
-            downPayment: document.getElementById('down-payment'),
-            newOrderBtn: document.getElementById('new-order-btn'),
-            exportExcelBtn: document.getElementById('export-excel-btn'),
-            exportPdfBtn: document.getElementById('export-pdf-btn'),
-            sendEmailBtn: document.getElementById('send-email-btn'),
-            saveOrderBtn: document.getElementById('save-order-btn'),
+        // =================================================================================
+        // --- UTILITY & HELPER FUNCTIONS ---
+        // =================================================================================
+        const sanitizeForId = (str) => str.replace(/[^a-zA-Z0-9-_]/g, '_');
+
+        const getPriceForQuantity = (pricingTiers, totalQuantity) => {
+            if (!pricingTiers || pricingTiers.length === 0) return 0;
+            return pricingTiers.slice().reverse().find(tier => totalQuantity >= tier.quantity)?.price || pricingTiers[0].price;
         };
         
-        // --- DATABASE & AUTOCOMPLETE FUNCTIONS ---
-        let clientDatabase = [];
+        const getTierRangeString = (pricingTiers, totalQuantity) => {
+            if (!pricingTiers || pricingTiers.length === 0 || totalQuantity === 0) return '';
+            const applicableTier = pricingTiers.slice().reverse().find(tier => totalQuantity >= tier.quantity) || pricingTiers[0];
+            const tierIndex = pricingTiers.findIndex(tier => tier.quantity === applicableTier.quantity);
+            if (tierIndex === -1) return '';
+            const lowerBound = applicableTier.quantity;
+            if (tierIndex === pricingTiers.length - 1) return `(Tarif pour ${lowerBound}+ pièces)`;
+            const upperBound = pricingTiers[tierIndex + 1].quantity - 1;
+            return lowerBound === upperBound ? `(Tarif pour ${lowerBound} pièces)` : `(Tarif pour ${lowerBound}-${upperBound} pièces)`;
+        };
 
-        const saveClientInfo = () => {
-            const clubName = dom.clubName.value.trim();
-            const clientNumber = dom.clientNumber.value.trim();
-            const departement = dom.departement.value.trim();
+        const formatTiersForDisplay = (tiers) => {
+             if (!tiers) return '<p>Prix unique</p>';
+             let html = '<div class="space-y-1">';
+             tiers.forEach((tier, index) => {
+                 const nextTier = tiers[index + 1];
+                 let range;
+                 if (!nextTier) {
+                     range = `${tier.quantity}+`;
+                 } else {
+                     range = tier.quantity === nextTier.quantity - 1 ? `${tier.quantity}` : `${tier.quantity}-${nextTier.quantity - 1}`;
+                 }
+                 html += `<div class="flex justify-between"><span class="font-medium text-gray-600">${range} p:</span><span class="font-bold text-indigo-700">${tier.price.toFixed(2)} €</span></div>`;
+             });
+             html += '</div>';
+             return html;
+        };
 
-            if (clubName && clientNumber) {
-                let clientFound = false;
-                clientDatabase.forEach(client => {
-                    if (client.clubName === clubName) {
-                        client.clientNumber = clientNumber;
-                        client.departement = departement;
-                        clientFound = true;
-                    }
-                });
-                if (!clientFound) {
-                    clientDatabase.push({ clubName, clientNumber, departement });
-                }
-                localStorage.setItem('clientDatabase', JSON.stringify(clientDatabase));
-                updateDatalists();
+        const formatTiersForPdf = (tiers) => {
+            if (!tiers) return 'Prix unique';
+            let text = '';
+            tiers.forEach((tier, index) => {
+                const nextTier = tiers[index + 1];
+                let range;
+                 if (!nextTier) {
+                     range = `${tier.quantity}+`;
+                 } else {
+                     range = tier.quantity === nextTier.quantity - 1 ? `${tier.quantity}` : `${tier.quantity}-${nextTier.quantity - 1}`;
+                 }
+                text += `${range} pièces: ${tier.price.toFixed(2)} €\n`;
+            });
+            return text.trim();
+        };
+
+        const summarizeSizes = (sizeString) => {
+            if (!sizeString || typeof sizeString !== 'string') return '';
+            const sizes = sizeString.split(', ');
+            if (sizes.length <= 2) {
+                return `Taille(s) : ${sizeString}`;
             }
+            return `Tailles : de ${sizes[0]} à ${sizes[sizes.length - 1]}`;
         };
 
-        const updateDatalists = () => {
-            const clubList = document.getElementById('club-list');
-            const clientList = document.getElementById('client-list');
-            if(clubList) clubList.innerHTML = clientDatabase.map(c => `<option value="${c.clubName}"></option>`).join('');
-            if(clientList) clientList.innerHTML = clientDatabase.map(c => `<option value="${c.clientNumber}"></option>`).join('');
+        const formatTeamTiersForDisplay = (product) => {
+            const price5 = getPriceForQuantity(product.pricingTiers, 5);
+            const price15 = getPriceForQuantity(product.pricingTiers, 15);
+            let html = '<div class="space-y-1">';
+            html += `<div class="flex justify-between"><span class="font-medium text-gray-600">5-14 p:</span><span class="font-bold text-green-700">${price5.toFixed(2)} €</span></div>`;
+            html += `<div class="flex justify-between"><span class="font-medium text-gray-600">15-19 p:</span><span class="font-bold text-green-700">${price15.toFixed(2)} €</span></div>`;
+            html += '</div>';
+            return html;
         };
 
-
-        // --- HELPER FUNCTIONS ---
-        const getPriceForQuantity = (pricingTiers, totalQuantity, applyGesture = false) => {
-            if (!pricingTiers || pricingTiers.length === 0) return 0;
-            let currentTierIndex = -1;
-            for (let i = pricingTiers.length - 1; i >= 0; i--) {
-                if (totalQuantity >= pricingTiers[i].quantity) {
-                    currentTierIndex = i;
-                    break;
-                }
-            }
-            if(currentTierIndex === -1) currentTierIndex = 0;
-
-            if (applyGesture) {
-                const currentTierQuantity = pricingTiers[currentTierIndex].quantity;
-                let nextTierIndex = -1;
-                for(let i = 0; i < pricingTiers.length; i++){
-                    if(pricingTiers[i].quantity > currentTierQuantity){
-                        nextTierIndex = i;
-                        break;
-                    }
-                }
-                if (nextTierIndex !== -1) return pricingTiers[nextTierIndex].price;
-            }
-            return pricingTiers[currentTierIndex].price;
-        };
-
-        const showModal = (modalElement, title, content, actions = []) => {
-            dom.mainModalTitle.textContent = title;
-            dom.mainModalBody.innerHTML = '';
-            dom.mainModalBody.appendChild(content);
-            dom.mainModalActions.innerHTML = '';
-            if (actions.length > 0) {
-                 actions.forEach(action => {
-                     const button = document.createElement('button');
-                     button.textContent = action.label;
-                     button.className = `${action.className || 'bg-indigo-600 hover:bg-indigo-700 text-white'} font-bold py-2 px-4 rounded-lg`;
-                     button.onclick = action.onClick;
-                     dom.mainModalActions.appendChild(button);
-                 });
-            } else {
-                 const closeButton = document.createElement('button');
-                 closeButton.textContent = 'Fermer';
-                 closeButton.className = 'bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg';
-                 closeButton.onclick = () => modalElement.classList.remove('is-open');
-                 dom.mainModalActions.appendChild(closeButton);
-            }
-            modalElement.classList.add('is-open');
-        };
-
-        const hideModal = (modalElement) => {
-            modalElement.classList.remove('is-open');
-        };
-
-        const createSpinner = () => {
-             const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-             svg.setAttribute('class', 'animate-spin -ml-1 mr-3 h-5 w-5 text-white');
-             svg.setAttribute('fill', 'none');
-             svg.setAttribute('viewBox', '0 0 24 24');
-             svg.innerHTML = `<circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>`;
-             return svg;
+        // --- MODAL MANAGEMENT ---
+        function showAlert(message, title = 'Information', onOk = null) {
+            alertModalTitle.textContent = title;
+            alertModalBody.textContent = message;
+            alertModal.classList.remove('hidden');
+            alertModal.classList.add('flex');
+            const newOkBtn = alertModalCloseBtn.cloneNode(true);
+            alertModalCloseBtn.parentNode.replaceChild(newOkBtn, alertModalCloseBtn);
+            alertModalCloseBtn = newOkBtn;
+            alertModalCloseBtn.onclick = () => {
+                hideAlert();
+                if (onOk) onOk();
+            };
         }
 
-        // --- CRM Integration via URL Parameters ---
-        const handleUrlParameters = () => {
-            const params = new URLSearchParams(window.location.search);
-            const clubName = params.get('nomClub');
-            const clientNumber = params.get('numClient');
-            const departement = params.get('departement');
-
-            if (clubName) state.clubName = decodeURIComponent(clubName.replace(/\+/g, ' '));
-            if (clientNumber) state.clientNumber = decodeURIComponent(clientNumber.replace(/\+/g, ' '));
-            if (departement) state.departement = decodeURIComponent(departement.replace(/\+/g, ' '));
+        const hideAlert = () => alertModal.classList.add('hidden');
+        const showConseilModal = (title, content) => {
+            conseilModalTitle.textContent = title;
+            conseilModalBody.innerHTML = content;
+            conseilModal.classList.remove('hidden');
+            conseilModal.classList.add('flex');
         };
-
-        // --- RENDER FUNCTIONS ---
-        const renderAll = () => {
-            renderTotals();
-            renderOrderTable();
-            renderUIState();
-            renderProductForm();
-            renderSavedOrders();
+        const hideConseilModal = () => conseilModal.classList.add('hidden');
+        const showTariffModal = () => {
+            renderGeneralTariffTable();
+            tariffModal.classList.remove('hidden');
+            tariffModal.classList.add('flex');
         };
-
-        const renderUIState = () => {
-            dom.clubName.value = state.clubName;
-            dom.departement.value = state.departement;
-            dom.clientNumber.value = state.clientNumber;
-            dom.preOrderNumber.value = state.preOrderNumber;
-            dom.quoteNumber.value = state.quoteNumber;
-            dom.orderDate.value = state.orderDate;
-            dom.orderSpecificity.value = state.orderSpecificity;
-            dom.licencieName.value = state.licencieName;
-            dom.clubDiscount.value = state.clubDiscount;
-            dom.imperatifNote.value = state.imperatifNote;
-            dom.docTypeOrderRadio.checked = state.documentType === 'order';
-            dom.docTypeQuoteRadio.checked = state.documentType === 'quote';
-            dom.docTypeReassortCheck.checked = state.isReassort;
-            dom.customDesignOrderCheck.checked = state.isCustomDesignOrder;
-            dom.storeOrderCheck.checked = state.isStoreOrder;
-            dom.applyDiscountCheck.checked = state.applyDiscount;
-            dom.imperatifCheck.checked = state.isImperatif;
-            dom.scopeGlobalRadio.checked = state.orderScope === 'global';
-            dom.scopeLicenseeRadio.checked = state.orderScope === 'licensee';
-            dom.discountGlobalRadio.checked = state.discountType === 'global';
-            dom.discountItemRadio.checked = state.discountType === 'item';
-            dom.licencieNameContainer.classList.toggle('hidden', !(state.orderScope === 'licensee' && state.documentType === 'order'));
-            dom.orderScopeContainer.classList.toggle('hidden', state.documentType !== 'order');
-            dom.preOrderNumberContainer.classList.toggle('hidden', state.documentType !== 'order');
-            dom.quoteNumberContainer.classList.toggle('hidden', state.documentType !== 'quote');
-            dom.discountControlsContainer.classList.toggle('hidden', !state.applyDiscount);
-            dom.imperatifNoteContainer.classList.toggle('hidden', !state.isImperatif);
+        const hideTariffModal = () => tariffModal.classList.add('hidden');
+        
+        // =================================================================================
+        // --- CORE LOGIC & UI UPDATES ---
+        // =================================================================================
+        
+        function updateUI() {
+            const { devisMode, gammeClubMode, customCreation } = quoteState;
             
-            const buttonText = state.orderId ? 'Mettre à jour la Commande' : 'Sauvegarder la Commande';
-            dom.saveOrderBtn.disabled = state.isSaving;
-            if (state.isSaving) {
-                 dom.saveOrderBtn.innerHTML = '';
-                 dom.saveOrderBtn.appendChild(createSpinner());
-                 dom.saveOrderBtn.append('Sauvegarde...');
+            document.querySelectorAll('#product-grid .product-card').forEach(card => {
+                const displayBox = card.querySelector('.product-display-box');
+                const singlePriceView = card.querySelector('.single-price-view');
+                const tiersPriceView = card.querySelector('.tiers-price-view');
+                const teamPriceView = card.querySelector('.team-price-view');
+                const productName = card.querySelector('.remove-product-btn').dataset.productName;
+                const product = productMap.get(productName);
+                if (!product) return;
+                
+                // Hide all views first
+                displayBox.style.display = 'block';
+                singlePriceView.style.display = 'none';
+                tiersPriceView.style.display = 'none';
+                teamPriceView.style.display = 'none';
+                
+                const quantityElements = [card.querySelector('.quantity-label'), card.querySelector('.quantity-input'), card.querySelector('.quantity-warning')];
+                quantityElements.forEach(el => el.style.display = 'none');
+
+
+                if (gammeClubMode && customCreation) {
+                    teamPriceView.style.display = 'block';
+                    teamPriceView.querySelector('.team-tiers-content').innerHTML = formatTeamTiersForDisplay(product);
+                } else if (gammeClubMode) {
+                    displayBox.style.display = 'none';
+                } else if (devisMode) {
+                    quantityElements.forEach(el => el.style.display = 'block');
+                    singlePriceView.style.display = 'block';
+                } else { // Presentation Mode
+                    tiersPriceView.style.display = 'block';
+                    tiersPriceView.querySelector('.tiers-content').innerHTML = formatTiersForDisplay(product.pricingTiers || [{ quantity: 1, price: product.price }]);
+                }
+            });
+
+            if (devisMode) {
+                updateAllCalculationsAndRenderDetailedSummary();
+            } else if (gammeClubMode) {
+                renderGammeClubSummary();
             } else {
-                 dom.saveOrderBtn.textContent = buttonText;
+                renderPresentationSummary();
+            }
+        }
+
+        function updateAllCalculationsAndRenderDetailedSummary() {
+            if (!quoteState.devisMode) return;
+
+            const groupQuantities = {};
+            let totalNonAccessoryQty = 0;
+
+            for (const itemName in quoteState.items) {
+                const product = productMap.get(itemName);
+                const item = quoteState.items[itemName];
+                if (product && item.quantity > 0) {
+                    if (product.type !== 'accessoire') {
+                        totalNonAccessoryQty += item.quantity;
+                    }
+                    if (product.pricingGroup) {
+                        groupQuantities[product.pricingGroup] = (groupQuantities[product.pricingGroup] || 0) + item.quantity;
+                    }
+                }
             }
 
-            dom.exportPdfBtn.disabled = !state.isOrderValidated;
-            dom.exportExcelBtn.disabled = !state.isOrderValidated;
-            dom.sendEmailBtn.disabled = !state.isOrderValidated;
+            for (const itemName in quoteState.items) {
+                const product = productMap.get(itemName);
+                const item = quoteState.items[itemName];
+                if (!product) continue;
+                
+                // Normal pricing logic always applies for calculation
+                const pricingQty = product.pricingGroup ? groupQuantities[product.pricingGroup] : item.quantity;
 
-            renderOrderTableHead();
-        };
-        
-        const renderOrderTableHead = () => {
-            let headers = '';
-            if (state.applyDiscount && state.discountType === 'item') {
-                  headers += `<th class="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Remise</th>`;
+                let unitPrice = product.price || getPriceForQuantity(product.pricingTiers, pricingQty) || 0;
+                
+                item.options.forEach(optionName => {
+                    const optionProduct = productMap.get(optionName);
+                    if (optionProduct) {
+                        unitPrice += optionProduct.fixedPriceTTC || getPriceForQuantity(optionProduct.pricingTiers, pricingQty) || 0;
+                    }
+                });
+                
+                const priceDisplay = document.querySelector(`#product-card-${sanitizeForId(itemName)} .price-display`);
+                if (priceDisplay) {
+                     priceDisplay.textContent = item.quantity > 0 ? `${unitPrice.toFixed(2)} €` : '- €';
+                }
+
+                const warningDiv = document.querySelector(`#product-card-${sanitizeForId(itemName)} .quantity-warning`);
+                if (warningDiv) {
+                    warningDiv.style.display = (product.minQuantity && item.quantity > 0 && item.quantity < product.minQuantity) ? 'block' : 'none';
+                    if (warningDiv.style.display === 'block') warningDiv.textContent = `Min. ${product.minQuantity} pièces requis.`;
+                }
             }
-            headers += `
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Produit</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Qté</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Prix U. HT</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Prix U. TTC</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total HT</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total TTC</th>
-                <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-            `;
-            dom.orderTableHead.innerHTML = `<tr>${headers}</tr>`;
-        };
+            
+            renderDetailedSummaryBar(groupQuantities);
+        }
+
+        function renderDetailedSummaryBar(groupQuantities) {
+            summaryBar.style.display = 'block';
+            if (Object.values(quoteState.items).every(item => item.quantity === 0)) {
+                 summaryBar.innerHTML = `<div class="max-w-6xl mx-auto text-center text-gray-500"><p class="font-semibold text-indigo-700">Mode Devis Actif</p><p>Saisissez des quantités pour commencer le calcul.</p></div>`;
+                 return;
+            }
+
+            let subtotalTTC = 0, totalNonAccessoryQty = 0, totalItems = 0;
+            for (const itemName in quoteState.items) {
+                const item = quoteState.items[itemName];
+                const product = productMap.get(itemName);
+                if (!product || item.quantity === 0) continue;
+
+                totalItems += item.quantity;
+                if (product.type !== 'accessoire') totalNonAccessoryQty += item.quantity;
+                
+                const pricingQty = product.pricingGroup ? groupQuantities[product.pricingGroup] : item.quantity;
+                let unitPrice = product.price || getPriceForQuantity(product.pricingTiers, pricingQty) || 0;
+                item.options.forEach(optName => {
+                    const optProduct = productMap.get(optName);
+                    if (optProduct) unitPrice += optProduct.fixedPriceTTC || getPriceForQuantity(optProduct.pricingTiers, pricingQty) || 0;
+                });
+                subtotalTTC += unitPrice * item.quantity;
+            }
+            
+            const subtotalHT = subtotalTTC / (1 + TVA_RATE);
+            let shippingHT = 0;
+            if (subtotalHT > 2000) shippingHT = 0; else if (subtotalHT > 1000) shippingHT = 14; else if (subtotalHT > 500) shippingHT = 12; else if (subtotalHT > 0) shippingHT = 9.50;
+            const shippingTTC = shippingHT * (1 + TVA_RATE);
+            const graphicFeeTTC = (quoteState.customCreation && totalNonAccessoryQty > 0 && totalNonAccessoryQty < 20) ? GRAPHIC_FEE_TTC : 0;
+            const graphicFeeHT = graphicFeeTTC / (1 + TVA_RATE);
+            const grandTotalHT = subtotalHT + shippingHT + graphicFeeHT;
+            const grandTotalTTC = subtotalTTC + shippingTTC + graphicFeeTTC;
+
+            summaryBar.innerHTML = `
+                <div class="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
+                    <div class="md:col-span-2 space-y-2">
+                        <div class="grid grid-cols-2 gap-x-4 text-sm">
+                            <div>
+                                <div class="flex justify-between"><span>Sous-total HT</span><span class="font-semibold">${subtotalHT.toFixed(2)} €</span></div>
+                                <div class="flex justify-between"><span>Frais de port HT</span><span class="font-semibold">${shippingHT.toFixed(2)} €</span></div>
+                                ${graphicFeeHT > 0 ? `<div class="flex justify-between text-red-600"><span>Forfait Création HT</span><span class="font-semibold">${graphicFeeHT.toFixed(2)} €</span></div>` : ''}
+                                <div class="flex justify-between font-bold border-t pt-1 mt-1"><span>Total HT</span><span>${grandTotalHT.toFixed(2)} €</span></div>
+                            </div>
+                            <div>
+                                <div class="flex justify-between"><span>Sous-total TTC</span><span class="font-semibold">${subtotalTTC.toFixed(2)} €</span></div>
+                                <div class="flex justify-between"><span>Frais de port TTC</span><span class="font-semibold">${shippingTTC.toFixed(2)} €</span></div>
+                                ${graphicFeeTTC > 0 ? `<div class="flex justify-between text-red-600"><span>Forfait Création TTC</span><span class="font-semibold">${graphicFeeTTC.toFixed(2)} €</span></div>` : ''}
+                                <div class="flex justify-between font-bold border-t pt-1 mt-1 text-indigo-600"><span>Total TTC</span><span>${grandTotalTTC.toFixed(2)} €</span></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex items-center justify-around md:justify-end gap-4">
+                        <div class="text-center">
+                             <div class="text-3xl font-extrabold text-indigo-600">${totalItems}</div>
+                             <div class="text-xs text-gray-500 uppercase">Articles</div>
+                        </div>
+                        <div class="flex flex-col gap-2">
+                            <button id="email-devis-btn" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded-lg text-sm">Envoyer par Mail</button>
+                            <button id="export-devis-pdf-btn" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg text-sm">Exporter PDF</button>
+                            <button id="reset-summary-btn" class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-lg text-sm">Réinitialiser</button>
+                        </div>
+                    </div>
+                </div>`;
+        }
         
-        const renderOrderTable = () => {
-            if (state.currentOrderLineItems.length === 0) {
-                dom.orderTableBody.innerHTML = `<tr><td colspan="9" class="px-6 py-12 text-center text-gray-500">Aucun article.</td></tr>`;
+        function renderPresentationSummary() {
+            const itemCount = Object.keys(quoteState.items).length;
+            if (itemCount === 0) {
+                summaryBar.style.display = 'none';
                 return;
             }
-            let tableHtml = '';
-            const sortedItems = sortLineItems(state.currentOrderLineItems);
-            if (state.orderScope === 'licensee' && state.documentType === 'order') {
-                const groupedItems = sortedItems.reduce((acc, item) => {
-                    const key = item.licencieName || 'Commande Globale';
-                    if (!acc[key]) acc[key] = [];
-                    acc[key].push(item);
+            summaryBar.style.display = 'block';
+            summaryBar.innerHTML = `
+                 <div class="max-w-6xl mx-auto flex justify-between items-center">
+                    <span class="text-gray-700 font-semibold">Mode Présentation : ${itemCount} article${itemCount > 1 ? 's' : ''} sélectionné${itemCount > 1 ? 's' : ''}</span>
+                    <div class="flex items-center gap-2">
+                        <button id="export-devis-pdf-btn" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg text-sm">Exporter la Sélection en PDF</button>
+                        <button id="reset-summary-btn" class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-lg text-sm">Réinitialiser</button>
+                    </div>
+                </div>`;
+        }
+
+        function renderGammeClubSummary() {
+            const itemCount = Object.keys(quoteState.items).length;
+            if (itemCount === 0) {
+                summaryBar.style.display = 'none';
+                return;
+            }
+            summaryBar.style.display = 'block';
+            summaryBar.innerHTML = `
+                 <div class="max-w-6xl mx-auto flex justify-between items-center">
+                    <span class="text-gray-700 font-semibold">Mode Gamme Club : ${itemCount} article${itemCount > 1 ? 's' : ''} sélectionné${itemCount > 1 ? 's' : ''}</span>
+                    <div class="flex items-center gap-2">
+                        <button id="export-devis-pdf-btn" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg text-sm">Exporter la Gamme en PDF</button>
+                        <button id="reset-summary-btn" class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-lg text-sm">Réinitialiser</button>
+                    </div>
+                </div>`;
+        }
+        
+        // =================================================================================
+        // --- DOM MANIPULATION & RENDERING ---
+        // =================================================================================
+
+        const addItemToQuote = (productName) => {
+            if (quoteState.items[productName]) {
+                return false; // Not added, already exists
+            }
+            quoteState.items[productName] = { quantity: 0, options: new Set() };
+            return true; // Added successfully
+        };
+
+        const removeItemFromQuote = (productName) => {
+            delete quoteState.items[productName];
+        };
+
+        const createAndAppendProductCard = (productName) => {
+            const sanitizedId = sanitizeForId(productName);
+            document.getElementById('product-placeholder')?.remove();
+
+            const product = productMap.get(productName);
+            if (!product) return;
+
+            const template = document.getElementById('product-card-template');
+            const cardClone = template.content.cloneNode(true);
+            const cardElement = cardClone.querySelector('.product-card');
+            
+            cardElement.id = `product-card-${sanitizedId}`;
+            cardElement.querySelector('.product-category').textContent = `${product.category} / ${product.subtype}`;
+            cardElement.querySelector('.product-name').textContent = product.name;
+            
+            cardElement.querySelector('.remove-product-btn').dataset.productName = product.name;
+            const quantityInput = cardElement.querySelector('.quantity-input');
+            quantityInput.id = `qty-${sanitizedId}`;
+            quantityInput.dataset.productName = product.name;
+            cardElement.querySelector('.quantity-label').htmlFor = `qty-${sanitizedId}`;
+
+            const linksContainer = cardElement.querySelector('.product-links');
+            let linksHtml = `<a href="${product.techSheetLink || '#'}" ${product.techSheetLink ? 'target="_blank"' : ''} class="tech-sheet-link inline-flex items-center gap-1 text-xs text-indigo-600 hover:text-indigo-800 hover:underline mt-1">Voir la fiche technique <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg></a>`;
+            if (product.chamoisInfo) {
+                linksHtml += `<a href="${product.chamoisInfo.link}" target="_blank" class="chamois-link inline-flex items-center gap-1 text-xs text-green-600 hover:text-green-800 hover:underline mt-1">Fiche technique ${product.chamoisInfo.name} <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg></a>`;
+            }
+            linksContainer.innerHTML = linksHtml;
+            
+            if (product.pricingGroup) {
+                const groupName = friendlyGroupNames[product.pricingGroup] || product.pricingGroup;
+                const groupColor = groupColors[product.pricingGroup];
+                cardElement.querySelector('.product-group-info').innerHTML = `<span>Prix groupé : <strong>${groupName}</strong></span>`;
+                cardElement.querySelector('.product-group-info').style.display = 'block';
+                const indicator = cardElement.querySelector('.group-color-indicator');
+                indicator.style.backgroundColor = groupColor;
+                indicator.title = `Article groupable : ${groupName}`;
+                indicator.style.display = 'block';
+            }
+
+            let optionsHtml = '';
+            const isLongSleeved = product.type === 'haut' && (product.name.includes('ML') || product.name.includes('MANCHES LONGUES'));
+            const normalOptions = (product.hasOptions !== false && product.type !== 'accessoire' && !product.isCuissardOrCollant) ? allAvailableProducts.filter(p => p.category === 'option' && !p.optionGroup && !(product.excludedOptions || []).includes(p.name)) : [];
+            const lengthOptions = (product.isCuissardOrCollant || isLongSleeved) ? allAvailableProducts.filter(p => p.optionGroup === 'length') : [];
+
+            if (normalOptions.length > 0 || lengthOptions.length > 0) {
+                optionsHtml = '<div class="mt-4 pt-4 border-t border-slate-200"><h5 class="text-sm font-semibold text-gray-600 mb-2">Options disponibles :</h5><div class="space-y-2">';
+                optionsHtml += normalOptions.map(opt => `<div class="flex items-center"><input id="option-${sanitizedId}-${sanitizeForId(opt.name)}" type="checkbox" data-product-name="${product.name}" data-option-name="${opt.name}" class="option-checkbox h-4 w-4 rounded border-gray-300 text-indigo-600"><label for="option-${sanitizedId}-${sanitizeForId(opt.name)}" class="ml-2 block text-sm text-gray-700">${opt.name}</label></div>`).join('');
+                if (lengthOptions.length > 0) {
+                    optionsHtml += '<div class="pt-2"><p class="text-xs font-medium text-gray-500 mb-1">Ajustement Longueur :</p><div class="flex flex-wrap gap-2">';
+                    optionsHtml += lengthOptions.map(opt => `<div class="flex items-center"><input id="option-${sanitizedId}-${sanitizeForId(opt.name)}" type="radio" name="length-option-${sanitizedId}" data-product-name="${product.name}" data-option-name="${opt.name}" class="option-radio h-4 w-4 border-gray-300 text-indigo-600"><label for="option-${sanitizedId}-${sanitizeForId(opt.name)}" class="ml-2 block text-sm text-gray-700">${opt.name.replace('Ajustement Longueur ', '')}</label></div>`).join('');
+                    optionsHtml += '</div></div>';
+                }
+                optionsHtml += '</div></div>';
+                cardElement.querySelector('.product-options-container').innerHTML = optionsHtml;
+            }
+
+            productGrid.appendChild(cardClone);
+            cardElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        };
+
+        const addProductToGrid = (productName) => {
+            const sanitizedId = sanitizeForId(productName);
+            const wasAdded = addItemToQuote(productName);
+            
+            if (wasAdded) {
+                createAndAppendProductCard(productName);
+                updateUI();
+            } else {
+                const existingCard = document.querySelector(`#product-card-${sanitizedId}`);
+                if (existingCard) {
+                    existingCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    existingCard.classList.add('scale-105', 'shadow-2xl');
+                    setTimeout(() => existingCard.classList.remove('scale-105', 'shadow-2xl'), 1000);
+                }
+            }
+        };
+
+        const renderSidebarNavigation = () => {
+            const container = document.getElementById('category-filters');
+            const isSelectionMode = quoteState.gammeClubMode || quoteState.devisMode;
+            const categoryOrder = ['CYCLISME', 'RUNNING', 'ENFANTS', 'ACCESSOIRES_PERSONNALISES', 'ACCESSOIRES_PERMANENTS'];
+            const categoryTitles = { CYCLISME: 'Cyclisme', RUNNING: 'Running', ENFANTS: 'Gamme Enfants', ACCESSOIRES_PERSONNALISES: 'Accessoires Personnalisés', ACCESSOIRES_PERMANENTS: 'Accessoires Permanents' };
+            
+            let html = `<h3 class="text-md font-bold text-gray-800 pb-2">2. Choisissez les articles</h3><div class="collapsible-container w-full text-left">`;
+            
+            const triggerContent = isSelectionMode
+            ? `
+                <div class="flex items-center gap-3">
+                    <input type="checkbox" id="select-all-gamme-check" class="h-5 w-5 rounded border-gray-400 text-green-600 focus:ring-green-500">
+                    <label for="select-all-gamme-check" class="text-base font-semibold text-gray-800 cursor-pointer">Toutes les gammes</label>
+                </div>
+            `
+            : `<span>Toutes les gammes</span>`;
+
+            html += `
+                <div class="collapsible-trigger cursor-pointer text-base font-semibold text-gray-800 flex justify-between items-center hover:text-indigo-600 p-2.5 rounded-md bg-white shadow-sm">
+                    ${triggerContent}
+                    <svg class="chevron h-4 w-4 transition-transform" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" /></svg>
+                </div>
+                <div class="collapsible-content pl-2 pt-2">`;
+
+            categoryOrder.forEach(catKey => {
+                let productsToRender, hasSubtypes = true;
+                if (catKey === 'ACCESSOIRES_PERSONNALISES') {
+                    productsToRender = allAvailableProducts.filter(p => p.subtype === 'ACCESSOIRES PERSONNALISÉS');
+                    hasSubtypes = false;
+                } else if (catKey === 'ACCESSOIRES_PERMANENTS') {
+                    productsToRender = allAvailableProducts.filter(p => p.subtype === 'ACCESSOIRES PERMANENTS');
+                    hasSubtypes = false;
+                } else {
+                    productsToRender = allAvailableProducts.filter(p => p.category === catKey);
+                }
+
+                const groupedBySubtype = productsToRender.reduce((acc, p) => {
+                    const subtype = p.subtype || 'default';
+                    if (!acc[subtype]) acc[subtype] = [];
+                    acc[subtype].push(p);
                     return acc;
                 }, {});
-                for (const licensee in groupedItems) {
-                    let licenseeSubtotal = 0;
-                    tableHtml += `<tr class="bg-indigo-50"><td colspan="8" class="px-6 py-2 text-left text-sm font-bold text-indigo-800">${licensee}</td></tr>`;
-                    tableHtml += groupedItems[licensee].map(item => {
-                         let itemTotal = item.totalPriceTTC;
-                         if(state.applyDiscount && (state.discountType === 'global' || (state.discountType === 'item' && item.applyDiscount))){
-                              itemTotal -= (item.totalPriceTTC * (state.clubDiscount / 100));
-                         }
-                         licenseeSubtotal += itemTotal;
-                        return renderSingleItemRow(item); 
-                    }).join('');
-                     tableHtml += `<tr class="bg-indigo-100 font-bold"><td colspan="8" class="px-6 py-2 text-right text-sm text-indigo-800">Total à régler pour ${licensee}: ${licenseeSubtotal.toFixed(2)}€</td></tr>`;
-                }
-            } else {
-                 tableHtml = sortedItems.map(item => renderSingleItemRow(item)).join('');
-            }
-            dom.orderTableBody.innerHTML = tableHtml;
-        };
-        
-        const renderSingleItemRow = (item) => {
-            const gestureIndicator = item.applyGesture ? `<span class="text-green-500 ml-1" title="Geste commercial appliqué">✳</span>` : '';
-            const sortedSizeKeys = sortSizeKeys(Object.keys(item.quantitiesPerSize));
-            const sizesText = sortedSizeKeys.map(size => `${size}: ${item.quantitiesPerSize[size]}`).join(', ');
-            const optionsText = item.options.length > 0 ? `<div class="text-xs text-blue-500">Options: ${item.options.join(', ')}</div>` : '';
-            const specificityText = item.specificity ? `<div class="text-xs text-gray-600 italic mt-1">Note: ${item.specificity}</div>` : '';
-            let rowHtml = `<tr class="hover:bg-gray-50">`;
-            if (state.applyDiscount && state.discountType === 'item') {
-                rowHtml += `<td class="px-2 py-4 whitespace-nowrap"><input type="checkbox" class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" data-item-id="${item.id}" data-action="toggle-discount" ${item.applyDiscount ? 'checked' : ''}></td>`;
-            }
-            let totalTTCDisplay = `${item.totalPriceTTC.toFixed(2)}€`;
-            if (state.applyDiscount && ((state.discountType === 'global') || (state.discountType === 'item' && item.applyDiscount))) {
-                const discountedPrice = item.totalPriceTTC * (1 - (state.clubDiscount / 100));
-                totalTTCDisplay = `<div class="flex flex-col items-end"><span class="line-through text-gray-500 text-xs">${item.totalPriceTTC.toFixed(2)}€</span><span class="text-red-600 font-bold">${discountedPrice.toFixed(2)}€</span></div>`;
-            }
-            rowHtml += `
-                <td class="px-6 py-4 whitespace-nowrap"><div class="text-sm font-medium text-gray-900">${item.productName}${gestureIndicator}</div><div class="text-xs text-gray-500">${sizesText}</div>${optionsText}${specificityText}</td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${item.totalQuantity}</td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${item.unitPriceHT.toFixed(2)}€</td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${item.unitPriceTTC.toFixed(2)}€</td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900">${item.totalPriceHT.toFixed(2)}€</td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900">${totalTTCDisplay}</td>
-                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                    <button data-action="edit-item" data-item-id="${item.id}" class="text-blue-600 hover:text-blue-900 mr-4">Modifier</button>
-                    <button data-action="remove-item" data-item-id="${item.id}" class="text-red-600 hover:text-red-900">Supprimer</button>
-                </td>
-            </tr>`;
-            return rowHtml;
-        };
 
-        const renderTotals = () => {
-            const totals = calculateAllTotals();
-            dom.subtotalHT.textContent = `${totals.subtotalHT.toFixed(2)}€`;
-            dom.subtotalTTC.textContent = `${totals.subtotalTTC.toFixed(2)}€`;
-            dom.discountAmountHT.textContent = `-${totals.discountAmountHT.toFixed(2)}€`;
-            dom.discountAmountTTC.textContent = `-${totals.discountAmountTTC.toFixed(2)}€`;
-            dom.graphicDesignFeeHT.textContent = `${totals.appliedGraphicFeeHT.toFixed(2)}€`;
-            dom.graphicDesignFeeTTC.textContent = `${totals.appliedGraphicFeeTTC.toFixed(2)}€`;
-            dom.graphicFeeHtRow.classList.toggle('hidden', totals.appliedGraphicFeeTTC <= 0);
-            dom.graphicFeeTtcRow.classList.toggle('hidden', totals.appliedGraphicFeeTTC <= 0);
-            dom.shippingHT.textContent = `${totals.shippingHT.toFixed(2)}€`;
-            dom.shippingTTC.textContent = `${totals.shippingTTC.toFixed(2)}€`;
-            dom.grandTotalHT.textContent = `${totals.grandTotalHT.toFixed(2)}€`;
-            dom.grandTotalTTC.textContent = `${totals.grandTotalTTC.toFixed(2)}€`;
-            dom.downPaymentLabel.textContent = totals.downPaymentLabel;
-            dom.downPayment.textContent = `${totals.downPayment.toFixed(2)}€`;
-            dom.totalArticlesDisplay.textContent = `Total des articles : ${state.currentOrderLineItems.reduce((acc, item) => acc + item.totalQuantity, 0)}`;
-        };
-        
-        const renderProductForm = () => {
-            const productsToShow = allAvailableProducts.filter(p => {
-                if (p.category === 'option') return false;
-                const activeProductTab = document.querySelector('.product-tab-btn.border-indigo-500')?.dataset.tab;
-                if (activeProductTab === 'CYCLISME/RUNNING') return p.category === 'CYCLISME' || p.category === 'RUNNING';
-                if (activeProductTab === 'Accessoires') return p.category === 'ACCESSOIRES';
-                if (activeProductTab === 'GAMME ENFANTS') return p.category === 'ENFANTS';
-                return false;
-            });
-            const grouped = productsToShow.reduce((acc, p) => {
-                const groupKey = `${p.category} - ${p.subtype}`;
-                acc[groupKey] = [...(acc[groupKey] || []), p];
-                return acc;
-            }, {});
-            const productSelectorOptions = Object.entries(grouped).map(([groupLabel, productList]) => 
-                `<optgroup label="${groupLabel}">${productList.map(p => `<option value="${p.name}" ${state.currentProduct === p.name ? 'selected' : ''}>${p.name}</option>`).join('')}</optgroup>`
-            ).join('');
-            let formHtml = `<div class="space-y-6"><div><label class="block text-sm font-medium text-gray-700">Produit</label><select id="current-product-select" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm"><option value="">-- Sélectionner un produit --</option>${productSelectorOptions}</select></div>`;
-            const productData = allAvailableProducts.find(p => p.name === state.currentProduct);
-            if(productData){
-                formHtml += `<div id="product-details-form" class="space-y-6">`;
-                const isQuote = state.documentType === 'quote';
-                const showSizeGrid = !isQuote && productData && (productData.type === 'haut' || productData.type === 'enfant' || (productData.type === 'accessoire' && productData.sizeType && productData.sizeType !== 'unique'));
-                const showSingleQuantityForOrder = !isQuote && (productData?.type === 'accessoire' && (!productData.sizeType || productData.sizeType === 'unique'));
-                if(isQuote) formHtml += `<div><label for="quote-qty" class="block text-sm font-medium text-gray-700">Quantité</label><input type="number" id="quote-qty" value="${state.currentAccessoryQuantity}" min="1" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm" placeholder="0"></div>`;
-                if(showSizeGrid){
-                    const sizes = productSizes[productData.sizeType || productData.type] || [];
-                    const sizeInputs = sizes.map(size => `<div key="${size}"><label for="size-${size}" class="block text-sm font-medium text-gray-700">${size}</label><input type="number" id="size-${size}" data-size="${size}" class="size-input mt-1 block w-full rounded-md border-gray-300 shadow-sm" placeholder="0" value="${state.currentQuantities[size] || ''}"></div>`).join('');
-                    formHtml += `<div class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3">${sizeInputs}</div>`;
-                }
-                if(showSingleQuantityForOrder) formHtml += `<div><label for="accessory-qty" class="block text-sm font-medium text-gray-700">Quantité</label><input type="number" id="accessory-qty" value="${state.currentAccessoryQuantity}" min="1" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">${productData.minQuantity && state.orderScope === 'global' ? `<p class="text-xs text-gray-500 mt-1">Quantité minimale : ${productData.minQuantity}</p>` : ''}</div>`;
-                if (productData.colors) {
-                    const colorOptions = productData.colors.map(c => `<option value="${c}" ${state.currentColor === c ? 'selected' : ''}>${c}</option>`).join('');
-                    formHtml += `<div><label class="block text-sm font-medium text-gray-700">Coloris</label><select id="current-color-select" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm"><option value="">-- Sélectionner un coloris --</option>${colorOptions}</select></div>`;
-                }
-                formHtml += `<div class="flex justify-between items-center gap-4">`;
-                if(state.isReassort && productData.type !== 'accessoire') formHtml += `<div class="flex-grow"><label for="manual-price" class="block text-sm font-medium text-gray-700">Prix U. TTC Manuel</label><input type="number" id="manual-price" value="${state.manualUnitPrice}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm" placeholder="0.00"></div>`;
-                else if(state.currentCalculatedUnitPrice > 0) formHtml += `<div class="bg-indigo-50 p-4 rounded-lg flex-grow"><p class="text-indigo-800 font-semibold">Prix unitaire TTC : <span class="text-xl">${state.currentCalculatedUnitPrice.toFixed(2)}€</span></p></div>`;
-                formHtml += `<button id="add-product-btn" class="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-300">Ajouter Article</button></div>`;
-                if(productData.pricingTiers && productData.pricingTiers.length > 1 && !state.isReassort && state.documentType !== 'quote') formHtml += `<div class="mt-4"><label class="flex items-center"><input type="checkbox" id="commercial-gesture-check" class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" ${state.applyCommercialGesture ? 'checked' : ''}><span class="ml-2 text-sm text-gray-800">Geste commercial (passer au palier tarifaire suivant)</span></label></div>`;
-                let normalOptions = []; let lengthOptions = [];
-                const isLongSleeved = productData.type === 'haut' && (productData.name.includes('ML') || productData.name.includes('MANCHES LONGUES'));
-                if (productData.isCuissardOrCollant || isLongSleeved) lengthOptions = allAvailableProducts.filter(p => p.optionGroup === 'length');
-                if (productData.hasOptions !== false && productData.type !== 'accessoire' && !productData.isCuissardOrCollant) normalOptions = allAvailableProducts.filter(p => p.category === 'option' && !p.optionGroup && !productData.excludedOptions?.includes(p.name));
-                if (lengthOptions.length > 0) formHtml += `<div><label class="block text-sm font-medium text-gray-700 mb-2">Ajustement Longueur</label><div class="grid grid-cols-2 md:grid-cols-3 gap-x-4 gap-y-2">${lengthOptions.map(opt => `<div class="flex items-center"><input id="option-${opt.name}" type="checkbox" data-option-name="${opt.name}" data-option-group="length" class="option-checkbox h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" ${state.currentSelectedOptions.includes(opt.name) ? 'checked' : ''}><label for="option-${opt.name}" class="ml-3 block text-sm text-gray-900">${opt.name.replace('Ajustement Longueur ', '')} (+${opt.fixedPriceTTC.toFixed(2)}€)</label></div>`).join('')}</div></div>`;
-                if (normalOptions.length > 0) formHtml += `<div><label class="block text-sm font-medium text-gray-700 mb-2">Options</label><div class="space-y-2">${normalOptions.map(opt => `<div class="flex items-center"><input id="option-${opt.name}" type="checkbox" data-option-name="${opt.name}" class="option-checkbox h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" ${state.currentSelectedOptions.includes(opt.name) ? 'checked' : ''}><label for="option-${opt.name}" class="ml-3 block text-sm text-gray-900">${opt.name}</label></div>`).join('')}</div></div>`;
-                formHtml += `<div><label for="specificity" class="block text-sm font-medium text-gray-700">Spécificité / Notes</label><textarea id="specificity" rows="3" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">${state.currentSpecificity}</textarea>${ productData?.type !== 'accessoire' && !state.isReassort ? `<button id="generate-specificity-btn" class="mt-2 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 disabled:bg-green-300" ${state.isGeneratingSpecificity ? 'disabled' : ''}>✨ Générer avec IA</button>` : ''}</div>`;
-                formHtml += `</div>`;
-            }
-            formHtml += `</div>`;
-            dom.productFormContainer.innerHTML = formHtml;
-        };
-
-        const renderSavedOrders = () => {
-            const listContainer = dom.savedOrdersList;
-            if (!listContainer) return;
-            listContainer.innerHTML = ''; 
-            if (state.savedOrders.length === 0) {
-                listContainer.innerHTML = '<p class="text-gray-500">Aucune commande sauvegardée.</p>';
-                return;
-            }
-            const sortedOrders = [...state.savedOrders].sort((a, b) => new Date(b.savedAt) - new Date(a.savedAt));
-            sortedOrders.forEach(order => {
-                const orderCard = document.createElement('div');
-                orderCard.className = 'p-4 border rounded-lg flex justify-between items-center bg-white shadow-sm';
-                orderCard.innerHTML = `<div><p class="font-bold text-indigo-700">${order.clubName}</p><p class="text-sm text-gray-600">N° Commande: ${order.preOrderNumber || order.quoteNumber || 'N/A'} - Date: ${order.orderDate}</p><p class="text-xs text-gray-500">Sauvegardé le: ${new Date(order.savedAt).toLocaleString('fr-FR')}</p></div><div class="flex gap-2"><button data-action="load-order" data-order-id="${order.orderId}" class="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700">Charger</button><button data-action="delete-order" data-order-id="${order.orderId}" class="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700">Supprimer</button></div>`;
-                listContainer.appendChild(orderCard);
-            });
-        };
-
-
-        // --- CALCULATION LOGIC ---
-        const calculateCurrentFormPrice = () => {
-            const product = allAvailableProducts.find(p => p.name === state.currentProduct);
-            if (!product || (state.isReassort && product.type !== 'accessoire')) {
-                state.currentCalculatedUnitPrice = 0;
-                return;
-            }
-            let currentFormQuantity = 0;
-            if (state.documentType === 'quote') {
-                 currentFormQuantity = parseInt(state.currentAccessoryQuantity, 10) || 0;
-            } else {
-                 if (product.type === 'accessoire') {
-                     if(product.sizeType && product.sizeType !== 'unique') currentFormQuantity = Object.values(state.currentQuantities).reduce((sum, q) => sum + (parseInt(q, 10) || 0), 0);
-                     else currentFormQuantity = parseInt(state.currentAccessoryQuantity, 10) || 0;
-                 } else if (product.type === 'haut' || product.type === 'enfant') {
-                    currentFormQuantity = Object.values(state.currentQuantities).reduce((sum, q) => sum + (parseInt(q, 10) || 0), 0);
-                 }
-            }
-            let groupQuantityInCart = 0;
-            if (product.name === 'CHAUSSETTES AERO MIXTE 18cm') {
-                groupQuantityInCart = state.currentOrderLineItems.filter(li => li.productName === product.name && li.specificity === state.currentSpecificity).reduce((sum, li) => sum + li.totalQuantity, 0);
-            } else if (product.pricingGroup || (product.subtype === 'ACCESSOIRES PERSONNALISÉS' && product.pricingTiers)) {
-                groupQuantityInCart = state.currentOrderLineItems.filter(li => {
-                    const liProduct = allAvailableProducts.find(p => p.name === li.productName);
-                    return product.pricingGroup ? (liProduct && liProduct.pricingGroup === product.pricingGroup) : (li.productName === product.name);
-                }).reduce((sum, li) => sum + li.totalQuantity, 0);
-            }
-            const totalPricingQuantity = currentFormQuantity + groupQuantityInCart;
-            const basePrice = product.price ? product.price : getPriceForQuantity(product.pricingTiers, totalPricingQuantity, state.applyCommercialGesture);
-            const optionsPrice = state.currentSelectedOptions.reduce((total, optionName) => {
-                const optionProduct = allAvailableProducts.find(p => p.name === optionName);
-                if (!optionProduct) return total;
-                if (optionProduct.fixedPriceTTC) return total + optionProduct.fixedPriceTTC;
-                if (optionProduct.pricingTiers) return total + getPriceForQuantity(optionProduct.pricingTiers, totalPricingQuantity, item.applyGesture);
-                return total;
-            }, 0);
-            state.currentCalculatedUnitPrice = basePrice + optionsPrice;
-        };
-
-        const calculateAllTotals = () => {
-            const updatedLineItems = state.currentOrderLineItems.map(item => {
-                const product = allAvailableProducts.find(p => p.name === item.productName);
-                if (!product) return item;
-                let pricingQuantity = item.totalQuantity;
-                let baseUnitPriceTTC;
-                if (item.isManualPrice) {
-                    baseUnitPriceTTC = item.initialManualPrice;
-                } else {
-                    if (product.name === 'CHAUSSETTES AERO MIXTE 18cm') {
-                        pricingQuantity = state.currentOrderLineItems.filter(li => li.productName === product.name && li.specificity === item.specificity).reduce((sum, li) => sum + li.totalQuantity, 0);
-                    } else if (product.pricingGroup || (product.subtype === 'ACCESSOIRES PERSONNALISÉS' && product.pricingTiers)) {
-                        pricingQuantity = state.currentOrderLineItems.filter(li => {
-                            const liProduct = allAvailableProducts.find(p => p.name === li.productName);
-                            return product.pricingGroup ? (liProduct && liProduct.pricingGroup === product.pricingGroup) : (li.productName === item.productName);
-                        }).reduce((sum, li) => sum + li.totalQuantity, 0);
-                    }
-                   baseUnitPriceTTC = product.price ? product.price : getPriceForQuantity(product.pricingTiers, pricingQuantity, item.applyGesture);
-                }
-                const totalOptionsPriceTTC = item.options.reduce((total, optionName) => {
-                    const optionProduct = allAvailableProducts.find(p => p.name === optionName);
-                    if (!optionProduct) return total;
-                    if (optionProduct.fixedPriceTTC) return total + optionProduct.fixedPriceTTC;
-                    if (optionProduct.pricingTiers) return total + getPriceForQuantity(optionProduct.pricingTiers, pricingQuantity, item.applyGesture);
-                    return total;
-                }, 0);
-                const finalUnitPriceTTC = baseUnitPriceTTC + totalOptionsPriceTTC;
-                const totalPriceTTC = finalUnitPriceTTC * item.totalQuantity;
-                const finalUnitPriceHT = finalUnitPriceTTC / (1 + TVA_RATE);
-                const totalPriceHT = totalPriceTTC / (1 + TVA_RATE);
-                return { ...item, unitPriceTTC: finalUnitPriceTTC, unitPriceHT: finalUnitPriceHT, totalPriceTTC, totalPriceHT };
-            });
-            state.currentOrderLineItems = updatedLineItems;
-            const originalSubtotalHT = updatedLineItems.reduce((acc, item) => acc + item.totalPriceHT, 0);
-            const originalSubtotalTTC = updatedLineItems.reduce((acc, item) => acc + item.totalPriceTTC, 0);
-            let discountBaseHT = 0;
-            if (state.applyDiscount && state.discountType === 'global') discountBaseHT = originalSubtotalHT;
-            else if (state.applyDiscount && state.discountType === 'item') discountBaseHT = updatedLineItems.filter(item => item.applyDiscount).reduce((acc, item) => acc + item.totalPriceHT, 0);
-            const discountAmountHT = discountBaseHT * (state.clubDiscount / 100);
-            const discountAmountTTC = discountAmountHT * (1 + TVA_RATE);
-            let shippingHT = 0;
-            if (originalSubtotalHT > 2000) shippingHT = 0;
-            else if (originalSubtotalHT > 1000) shippingHT = 14;
-            else if (originalSubtotalHT > 500) shippingHT = 12;
-            else if (originalSubtotalHT > 0) shippingHT = 9.50;
-            const shippingTTC = shippingHT * (1 + TVA_RATE);
-            const appliedGraphicFeeTTC = state.isCustomDesignOrder ? GRAPHIC_FEE_TTC : 0;
-            const appliedGraphicFeeHT = appliedGraphicFeeTTC / (1 + TVA_RATE);
-            const grandTotalHT = originalSubtotalHT + shippingHT + appliedGraphicFeeHT;
-            const grandTotalTTC = originalSubtotalTTC + shippingTTC + appliedGraphicFeeTTC;
-            let downPayment = 0;
-            let downPaymentLabel = 'Acompte à verser (30%):';
-            if (state.isCustomDesignOrder) {
-                downPayment = grandTotalTTC;
-                downPaymentLabel = 'Solde à régler avant expédition:';
-            } else {
-                downPayment = grandTotalTTC * DOWN_PAYMENT_RATE;
-            }
-            return {
-                subtotalHT: originalSubtotalHT, subtotalTTC: originalSubtotalTTC,
-                discountAmountHT, discountAmountTTC, shippingHT, shippingTTC,
-                appliedGraphicFeeHT, appliedGraphicFeeTTC,
-                grandTotalHT, grandTotalTTC, downPayment, downPaymentLabel
-            };
-        };
-
-
-        // --- EVENT HANDLERS & LOGIC ---
-        const resetProductFormFields = () => {
-            state.applyCommercialGesture = false; state.currentQuantities = {};
-            state.currentCalculatedUnitPrice = 0; state.manualUnitPrice = '';
-            state.currentSelectedOptions = []; state.currentSpecificity = '';
-            state.currentAccessoryQuantity = ''; state.currentColor = '';
-        };
-
-        const handleProductAdd = () => {
-            const product = allAvailableProducts.find(p => p.name === state.currentProduct);
-            if (!product) return;
-            if (state.orderScope === 'licensee' && state.documentType === 'order' && !state.licencieName) {
-                const p = document.createElement('p');
-                p.textContent = `Veuillez saisir un nom de licencié avant d'ajouter un article.`;
-                showModal(dom.mainModal, 'Erreur de validation', p); return;
-            }
-            let totalQuantity = 0; let quantitiesPerSize = {};
-            if(state.documentType === 'quote') {
-                totalQuantity = parseInt(state.currentAccessoryQuantity, 10) || 0;
-                quantitiesPerSize = { 'Total': totalQuantity };
-            } else {
-                if (product.type === 'accessoire') {
-                     if (product.sizeType && product.sizeType !== 'unique') {
-                         totalQuantity = Object.values(state.currentQuantities).reduce((sum, q) => sum + (parseInt(q, 10) || 0), 0);
-                         quantitiesPerSize = { ...state.currentQuantities };
-                     } else {
-                         totalQuantity = parseInt(state.currentAccessoryQuantity, 10) || 0;
-                         quantitiesPerSize = { 'U': totalQuantity }; 
-                     }
-                } else {
-                    totalQuantity = Object.values(state.currentQuantities).reduce((sum, q) => sum + (parseInt(q, 10) || 0), 0);
-                    quantitiesPerSize = { ...state.currentQuantities };
-                }
-            }
-            if (totalQuantity === 0) {
-                 const p = document.createElement('p'); p.textContent = `Veuillez entrer une quantité valide.`;
-                 showModal(dom.mainModal, 'Erreur', p); return;
-            }
-            const isManualPriceItem = state.isReassort && product.type !== 'accessoire';
-            if (isManualPriceItem && (!state.manualUnitPrice || parseFloat(state.manualUnitPrice) <= 0)) {
-                const p = document.createElement('p'); p.textContent = `Veuillez saisir un prix manuel valide pour le réassort.`;
-                showModal(dom.mainModal, 'Erreur de Prix', p); return;
-            }
-            if(state.orderScope === 'global' && state.documentType === 'order' && product.subtype === 'ACCESSOIRES PERSONNALISÉS' && totalQuantity < product.minQuantity){
-                const p = document.createElement('p'); p.textContent = `La quantité minimale pour cet accessoire est de ${product.minQuantity}.`;
-                showModal(dom.mainModal, 'Erreur', p); return;
-            }
-            const newLineItem = {
-                id: Date.now(), productName: product.name, type: product.type,
-                quantitiesPerSize, totalQuantity, unitPriceTTC: 0, unitPriceHT: 0, totalPriceTTC: 0, totalPriceHT: 0,
-                options: state.currentSelectedOptions, specificity: state.currentSpecificity, applyDiscount: true,
-                applyGesture: !state.isReassort && state.orderScope === 'global' && state.documentType === 'order' ? state.applyCommercialGesture : false,
-                licencieName: (state.documentType === 'order' && state.orderScope === 'licensee') ? state.licencieName : 'Commande Globale',
-                color: state.currentColor, isManualPrice: isManualPriceItem,
-                initialManualPrice: isManualPriceItem ? parseFloat(state.manualUnitPrice) : 0,
-            };
-            state.currentOrderLineItems.push(newLineItem);
-            state.isOrderValidated = false; state.currentProduct = '';
-            resetProductFormFields(); renderAll();
-        };
-        
-        const resetForm = () => {
-            Object.assign(state, {
-                isGeneratingSpecificity: false, isSaving: false, isReassort: false, isCustomDesignOrder: false, 
-                isStoreOrder: false, applyDiscount: false, clubName: '', departement: '', clientNumber: '', 
-                preOrderNumber: '', quoteNumber: '', orderDate: new Date().toISOString().split('T')[0], 
-                licencieName: '', clubDiscount: 0, currentOrderLineItems: [], discountType: 'global',
-                orderScope: 'global', documentType: 'order', orderSpecificity: '', isImperatif: false, 
-                imperatifNote: '', orderId: null, isOrderValidated: false
-            });
-            state.currentProduct = '';
-            resetProductFormFields();
-            handleUrlParameters(); // Re-apply URL params after reset
-            renderAll();
-        };
-
-        const handleNewOrder = () => {
-            const p = document.createElement('p'); p.textContent = `Êtes-vous sûr de vouloir commencer une nouvelle commande ? Toutes les modifications non sauvegardées seront perdues.`;
-            const actions = [
-                { label: 'Annuler', onClick: () => hideModal(dom.mainModal), className: 'bg-gray-300 hover:bg-gray-400 text-gray-800' },
-                { label: 'Commencer une nouvelle commande', onClick: () => { resetForm(); hideModal(dom.mainModal); }, className: 'bg-red-600 hover:bg-red-700 text-white' }
-            ];
-            showModal(dom.mainModal, 'Confirmation', p, actions);
-        };
-
-        const promptForForceCode = (callbackOnSuccess) => {
-            hideModal(dom.mainModal); 
-            const container = document.createElement('div'); container.className = 'space-y-4';
-            const p = document.createElement('p'); p.textContent = 'Pour forcer cette action, veuillez saisir le code d\'autorisation.';
-            const input = document.createElement('input'); input.type = 'password'; input.id = 'force-code-input'; input.className = 'mt-1 block w-full rounded-md border-gray-300 shadow-sm';
-            const errorMsg = document.createElement('p'); errorMsg.id = 'force-code-error'; errorMsg.className = 'text-red-500 text-sm hidden'; errorMsg.textContent = 'Code incorrect.';
-            container.appendChild(p); container.appendChild(input); container.appendChild(errorMsg);
-            const actions = [
-                { label: 'Annuler', onClick: () => hideModal(dom.mainModal), className: 'bg-gray-300' },
-                { label: 'Confirmer', onClick: () => {
-                    if (document.getElementById('force-code-input').value === '582069') {
-                        hideModal(dom.mainModal); callbackOnSuccess();
+                html += `<div class="collapsible-container w-full text-left"><h4 class="collapsible-trigger cursor-pointer text-md font-bold text-gray-600 mb-1 flex justify-between items-center hover:text-indigo-600 p-2 rounded-md"><span>${categoryTitles[catKey]}</span><svg class="chevron h-4 w-4 transition-transform" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" /></svg></h4><div class="collapsible-content pl-3">`;
+                
+                const renderProductButton = (product) => {
+                    const colorDot = groupColors[product.pricingGroup] ? `<span class="inline-block w-2 h-2 rounded-full mr-2" style="background-color: ${groupColors[product.pricingGroup]};"></span>` : '<span class="inline-block w-2 h-2 mr-2"></span>';
+                    if (isSelectionMode) {
+                        const isChecked = quoteState.items[product.name] ? 'checked' : '';
+                        return `<div class="flex items-center p-1.5"><input type="checkbox" id="select-check-${sanitizeForId(product.name)}" ${isChecked} data-product-name="${product.name}" class="product-select-check h-4 w-4 rounded border-gray-400 text-green-600 focus:ring-green-500"><label for="select-check-${sanitizeForId(product.name)}" class="ml-2 text-xs font-medium text-gray-700 hover:text-green-800 cursor-pointer">${product.name}</label></div>`;
                     } else {
-                        document.getElementById('force-code-error').classList.remove('hidden');
-                        document.getElementById('force-code-input').classList.add('border-red-500'); input.focus();
+                        return `<button class="add-product-btn w-full text-left px-2 py-1.5 text-xs font-medium rounded-md transition text-gray-700 hover:bg-indigo-100 hover:text-indigo-800 flex items-center" data-product-name="${product.name}">${colorDot}<span>${product.name}</span></button>`;
                     }
-                }, className: 'bg-green-600 hover:bg-green-700' }
-            ];
-            showModal(dom.mainModal, 'Code d\'Autorisation Requis', container, actions);
-        };
-        
-        const handleSaveOrderClick = () => {
-            if (!state.clubName || !state.departement || !state.clientNumber) {
-                const p = document.createElement('p'); p.textContent = 'Le nom du club, le département et le N° client sont obligatoires.';
-                showModal(dom.mainModal, 'Erreur de validation', p); return;
-            }
-            if (state.currentOrderLineItems.length === 0) {
-                const p = document.createElement('p'); p.textContent = 'Impossible de sauvegarder un document vide.';
-                showModal(dom.mainModal, 'Erreur de validation', p); return;
-            }
-            if (state.isReassort) {
-                 const nonAccessoryItems = state.currentOrderLineItems.filter(item => {
-                     const product = allAvailableProducts.find(p => p.name === item.productName);
-                     return product && product.type !== 'accessoire';
-                 });
-                 const totalNonAccessoryQuantity = nonAccessoryItems.reduce((sum, item) => sum + item.totalQuantity, 0);
-                 if (totalNonAccessoryQuantity < 10) {
-                     const p = document.createElement('p'); p.innerHTML = `<b>Validation Réassort :</b> La commande doit contenir un minimum de 10 articles (hors accessoires).<br>Quantité actuelle : <b>${totalNonAccessoryQuantity}</b>.`;
-                     showModal(dom.mainModal, 'Validation Impossible (Réassort)', p, [
-                         { label: 'Fermer', onClick: () => hideModal(dom.mainModal), className: 'bg-gray-300' },
-                         { label: 'Forcer la sauvegarde', onClick: () => promptForForceCode(() => saveOrder()), className: 'bg-orange-500 hover:bg-orange-600' }
-                     ]); return;
-                 }
-                 const itemsWithLessThanTwo = nonAccessoryItems.filter(item => item.totalQuantity < 2);
-                 if (itemsWithLessThanTwo.length > 0) {
-                    const p = document.createElement('p');
-                    p.innerHTML = `<b>Validation Réassort :</b> Chaque article d'une commande de réassort doit avoir une quantité minimale de 2.<br><br>Les articles suivants ne respectent pas cette règle :<ul class="list-disc list-inside mt-2">${itemsWithLessThanTwo.map(item => `<li>${item.productName} (Qté: ${item.totalQuantity})</li>`).join('')}</ul>`;
-                    showModal(dom.mainModal, 'Validation Impossible (Réassort)', p, [
-                        { label: 'Fermer', onClick: () => hideModal(dom.mainModal), className: 'bg-gray-300' },
-                        { label: 'Forcer la sauvegarde', onClick: () => promptForForceCode(() => saveOrder()), className: 'bg-orange-500 hover:bg-orange-600' }
-                    ]); return;
-                }
-            } else if (state.documentType === 'order') {
-                 const totalQuantity = state.currentOrderLineItems.reduce((sum, item) => sum + item.totalQuantity, 0);
-                 if (totalQuantity < 10 && !state.isCustomDesignOrder) {
-                      const p = document.createElement('p'); p.innerHTML = `<b>Validation Commande :</b> La commande doit contenir un minimum de 10 articles au total.<br>Quantité actuelle : <b>${totalQuantity}</b>.`;
-                      showModal(dom.mainModal, 'Validation Impossible', p, [
-                         { label: 'Annuler', onClick: () => hideModal(dom.mainModal), className: 'bg-gray-300' },
-                         { label: 'Forcer la sauvegarde', onClick: () => promptForForceCode(() => saveOrder()), className: 'bg-orange-500 hover:bg-orange-600' }
-                      ]); return;
-                 }
-            }
-            saveOrder();
-        };
-
-        const createOrderSnapshot = () => {
-            const orderData = {};
-            const orderKeys = [
-                'orderId', 'isReassort', 'isCustomDesignOrder', 'isStoreOrder', 'applyDiscount', 'clubName', 'departement', 
-                'clientNumber', 'preOrderNumber', 'quoteNumber', 'orderDate', 'licencieName', 'clubDiscount', 
-                'currentOrderLineItems', 'discountType', 'orderScope', 'documentType', 'orderSpecificity', 
-                'isImperatif', 'imperatifNote'
-            ];
-            orderKeys.forEach(key => { orderData[key] = state[key]; });
-            return orderData;
-        };
-        
-        const saveOrder = () => {
-            state.isSaving = true; renderAll();
-            const orderSnapshot = createOrderSnapshot();
-            setTimeout(() => {
-                if (state.orderId) {
-                    const index = state.savedOrders.findIndex(o => o.orderId === state.orderId);
-                    if (index !== -1) state.savedOrders[index] = { ...orderSnapshot, savedAt: new Date().toISOString() };
-                    else { 
-                        const newOrderId = Date.now(); orderSnapshot.orderId = newOrderId;
-                        state.orderId = newOrderId; state.savedOrders.push({ ...orderSnapshot, savedAt: new Date().toISOString() });
-                    }
-                } else {
-                    const newOrderId = Date.now(); orderSnapshot.orderId = newOrderId;
-                    state.orderId = newOrderId; state.savedOrders.push({ ...orderSnapshot, savedAt: new Date().toISOString() });
-                }
-                localStorage.setItem('savedOrdersDB', JSON.stringify(state.savedOrders));
-                state.isSaving = false; state.isOrderValidated = true;
-                const p = document.createElement('p'); p.textContent = "La commande a été sauvegardée et validée avec succès. Les exports sont maintenant disponibles.";
-                showModal(dom.mainModal, 'Succès', p); renderAll();
-            }, 500);
-        };
-
-        // --- PDF EXPORT ---
-        const handleExportPdf = () => {
-            if (!state.isOrderValidated) {
-                 const p = document.createElement('p'); p.textContent = "Veuillez d'abord valider la commande en cliquant sur 'Sauvegarder la Commande' avant de l'exporter.";
-                 showModal(dom.mainModal, 'Exportation impossible', p); return;
-            }
-            const { jsPDF } = window.jspdf;
-            const doc = new jsPDF(); const totals = calculateAllTotals(); let finalY = 0;
-            doc.setFontSize(18);
-            const docTitle = `${state.documentType === 'quote' ? 'Devis' : 'Bon de commande'} ${state.isReassort ? '(Réassort 2 mois)' : ''}`;
-            doc.text(docTitle, 14, 22);
-            doc.setFontSize(11); doc.setTextColor(100);
-            doc.text(`Nom du Club: ${state.clubName}`, 14, 32);
-            doc.text(`Département: ${state.departement}`, 14, 38);
-            doc.text(`N° Client: ${state.clientNumber}`, 14, 44);
-            const orderRefLabel = state.documentType === 'quote' ? 'N° Devis:' : 'N° Pré-commande:';
-            const orderRefValue = state.documentType === 'quote' ? state.quoteNumber : state.preOrderNumber;
-            doc.text(`${orderRefLabel} ${orderRefValue}`, 140, 32);
-            doc.text(`Date: ${state.orderDate}`, 140, 38);
-            if (state.documentType === 'quote') doc.text("Validité de l'offre: 1 mois", 140, 44);
-            finalY = 50; 
-            if (state.isImperatif && state.imperatifNote) {
-                doc.setFillColor(255, 26, 26); doc.setTextColor(255, 255, 255); doc.setFont(undefined, 'bold');
-                const noteLines = doc.splitTextToSize(`IMPÉRATIF : ${state.imperatifNote}`, 180);
-                const noteHeight = (noteLines.length * 5) + 8;
-                doc.rect(14, finalY, 182, noteHeight, 'F'); doc.text(noteLines, 16, finalY + 6);
-                finalY += noteHeight + 5;
-                doc.setTextColor(0); doc.setFont(undefined, 'normal');
-            }
-            const head = [['Produit', 'Tailles', 'Qté', 'Prix U. HT', 'Prix U. TTC', 'Total HT', 'Total TTC']];
-            const body = sortLineItems(state.currentOrderLineItems).map(item => {
-                let productName = item.productName;
-                if (item.options.length > 0) productName += `\nOptions: ${item.options.join(', ')}`;
-                if (item.specificity) productName += `\nNote: ${item.specificity}`;
-                const sizesText = sortSizeKeys(Object.keys(item.quantitiesPerSize)).map(size => `${size}: ${item.quantitiesPerSize[size]}`).join('\n');
-                return [ productName, sizesText, item.totalQuantity, `${item.unitPriceHT.toFixed(2)} €`, `${item.unitPriceTTC.toFixed(2)} €`, `${item.totalPriceHT.toFixed(2)} €`, `${item.totalPriceTTC.toFixed(2)} €`];
-            });
-            doc.autoTable({ startY: finalY, head: head, body: body, theme: 'striped', headStyles: { fillColor: [41, 128, 185], textColor: 255 }, styles: { cellPadding: 2, fontSize: 8 }, didDrawPage: (data) => { finalY = data.cursor.y; } });
-            const totalsLabelX = 120; const totalsValueX = 200; let totalsY = finalY + 10;
-            if (totalsY + 70 > doc.internal.pageSize.height) { doc.addPage(); totalsY = 20; }
-            doc.setFontSize(10);
-            doc.text(`Sous-total HT:`, totalsLabelX, totalsY); doc.text(`${totals.subtotalHT.toFixed(2)} €`, totalsValueX, totalsY, { align: 'right' }); totalsY += 6;
-            doc.text(`Sous-total TTC:`, totalsLabelX, totalsY); doc.text(`${totals.subtotalTTC.toFixed(2)} €`, totalsValueX, totalsY, { align: 'right' }); totalsY += 6;
-            if (state.applyDiscount && totals.discountAmountTTC > 0) {
-                 doc.setTextColor(255, 0, 0); doc.text(`Remise Club (${state.clubDiscount}%) TTC (Info):`, totalsLabelX, totalsY); doc.text(`-${totals.discountAmountTTC.toFixed(2)} €`, totalsValueX, totalsY, { align: 'right' }); totalsY += 6; doc.setTextColor(0);
-            }
-            if (totals.appliedGraphicFeeTTC > 0) { doc.text(`Frais création graphique TTC:`, totalsLabelX, totalsY); doc.text(`${totals.appliedGraphicFeeTTC.toFixed(2)} €`, totalsValueX, totalsY, { align: 'right' }); totalsY += 6; }
-            doc.text(`Frais de port HT:`, totalsLabelX, totalsY); doc.text(`${totals.shippingHT.toFixed(2)} €`, totalsValueX, totalsY, { align: 'right' }); totalsY += 6;
-            doc.text(`Frais de port TTC:`, totalsLabelX, totalsY); doc.text(`${totals.shippingTTC.toFixed(2)} €`, totalsValueX, totalsY, { align: 'right' }); totalsY += 8;
-            doc.setFontSize(12); doc.setFont(undefined, 'bold');
-            doc.text(`Total Général TTC:`, totalsLabelX, totalsY); doc.text(`${totals.grandTotalTTC.toFixed(2)} €`, totalsValueX, totalsY, { align: 'right' }); totalsY += 8;
-            doc.setTextColor(28, 175, 28); doc.text(totals.downPaymentLabel, totalsLabelX, totalsY); doc.text(`${totals.downPayment.toFixed(2)} €`, totalsValueX, totalsY, { align: 'right' });
-            doc.setTextColor(0); doc.setFont(undefined, 'normal');
-            finalY = Math.max(totalsY, doc.internal.pageSize.height - 60);
-            const observations = [ 'OBSERVATIONS GENERALES', 'Prix indiqués en HT et TTC.', 'Documents à contrôler.', 'Nous informer si modifications à effectuer.', 'Ce document est une précommande et non le document final, NORET se garde le droit d\'apporter des modifications et seul l\'accusé de réception envoyé pour validation et signature sera pris en compte.' ];
-            doc.setFillColor(255, 255, 0); doc.rect(14, finalY, 182, 35, 'F'); doc.setTextColor(0);
-            doc.setFontSize(9); doc.text(observations[0], 16, finalY + 5, {maxWidth: 178});
-            doc.setFontSize(8); doc.text(observations.slice(1).join('\n'), 16, finalY + 10, {maxWidth: 178});
-            doc.save(`devis-bon-de-commande_${state.clubName.replace(/ /g, '_') || 'commande'}_${state.orderDate}.pdf`);
-        };
-        
-        const handleExportExcel = () => {
-            if (!state.isOrderValidated) {
-                const p = document.createElement('p'); p.textContent = "Veuillez d'abord valider la commande en cliquant sur 'Sauvegarder la Commande' avant de l'exporter.";
-                showModal(dom.mainModal, 'Exportation impossible', p); return;
-            }
-            if (typeof XLSX === 'undefined') {
-                 const p = document.createElement('p'); p.textContent = "La librairie d'exportation Excel (SheetJS/xlsx) n'a pas pu être chargée.";
-                 showModal(dom.mainModal, 'Erreur de librairie', p); return;
-            }
-            const excelData = [];
-            const columnDefinitions = [
-                {id: 'produit', label: 'Produit'}, {id: 'licencie', label: 'Licencié'}, {id: 'specificite', label: 'Spécificité'},
-                {id: 'options', label: 'Options'}, {id: 'tailles', label: 'Tailles & Quantités'}, {id: 'qte', label: 'Qté Totale'},
-                {id: 'prixUHT', label: 'Prix U. HT'}, {id: 'prixUTTC', label: 'Prix U. TTC'}, {id: 'totalHT', label: 'Total HT'},
-                {id: 'totalTTC', label: 'Total TTC'}, {id: 'remise', label: 'Remise Appliquée'}, {id: 'geste', label: 'Geste Comm.'},
-            ];
-            const activeHeaders = columnDefinitions.filter(col => state.excelColumns[col.id] && !(col.id === 'licencie' && state.documentType === 'quote'));
-            excelData.push(activeHeaders.map(h => h.label));
-            sortLineItems(state.currentOrderLineItems).forEach(item => {
-                const sizes = sortSizeKeys(Object.keys(item.quantitiesPerSize)).map(size => `${size}: ${item.quantitiesPerSize[size]}`).join(' | ');
-                const discountAppliedText = state.discountType === 'item' ? (item.applyDiscount ? 'Oui' : 'Non') : 'Globale';
-                const rowData = {
-                    produit: item.productName, licencie: item.licencieName, specificite: item.specificity, options: item.options.join(', '),
-                    tailles: sizes, qte: item.totalQuantity, prixUHT: { t: 'n', v: item.unitPriceHT, z: '#,##0.00 €' },
-                    prixUTTC: { t: 'n', v: item.unitPriceTTC, z: '#,##0.00 €' }, totalHT: { t: 'n', v: item.totalPriceHT, z: '#,##0.00 €' },
-                    totalTTC: { t: 'n', v: item.totalPriceTTC, z: '#,##0.00 €' }, remise: discountAppliedText, geste: item.applyGesture ? 'Oui' : 'Non',
                 };
-                if(state.documentType !== 'order') delete rowData.licencie;
-                excelData.push(activeHeaders.map(h => rowData[h.id]));
+
+                if (hasSubtypes) {
+                    Object.keys(groupedBySubtype).sort().forEach(subtypeKey => {
+                        html += `<div class="collapsible-container w-full text-left"><h5 class="collapsible-trigger cursor-pointer text-sm font-semibold text-gray-500 flex justify-between items-center hover:text-indigo-600 p-1.5 rounded-md"><span>${subtypeKey}</span><svg class="chevron h-4 w-4 transition-transform" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" /></svg></h5><div class="collapsible-content pl-4 py-1">`;
+                        html += groupedBySubtype[subtypeKey].map(renderProductButton).join('');
+                        html += `</div></div>`;
+                    });
+                } else {
+                    html += productsToRender.map(renderProductButton).join('');
+                }
+                html += `</div></div>`;
             });
-             const totals = calculateAllTotals();
-             const totalArticles = state.currentOrderLineItems.reduce((acc, item) => acc + item.totalQuantity, 0);
-             const dataForSheet = [
-                  [`${state.documentType === 'quote' ? 'Devis' : 'Bon de commande'} ${state.isReassort ? '(Réassort 2 mois)' : ''}`], [], 
-                  ['Nom du Club:', state.clubName], ['Département:', state.departement], ['N° Client:', state.clientNumber], 
-                  [state.documentType === 'quote' ? 'N° Devis:' : 'N° Pré-commande:', state.documentType === 'quote' ? state.quoteNumber : state.preOrderNumber], 
-                  ['Date:', state.orderDate], ['Note Commande:', state.orderSpecificity], ['Commande Magasin:', state.isStoreOrder ? 'Oui' : 'Non'],
-                  ['Total Articles:', totalArticles],
-             ];
-             if(state.documentType === 'quote') dataForSheet.push(['Validité de l\'offre:', '1 mois']);
-             dataForSheet.push([], ...excelData);
-             const totalsStartColumn = excelData[0].length - 3;
-             dataForSheet.push([],
-                 Array(totalsStartColumn).fill(null).concat(['Sous-total HT:', { t: 'n', v: totals.subtotalHT, z: '#,##0.00 €' }]),
-                 Array(totalsStartColumn).fill(null).concat(['Sous-total TTC:', { t: 'n', v: totals.subtotalTTC, z: '#,##0.00 €' }]),
-                 Array(totalsStartColumn).fill(null).concat([`Remise Club (${state.clubDiscount}%) HT (Info):`, { t: 'n', v: -totals.discountAmountHT, z: '#,##0.00 €' }]),
-                 Array(totalsStartColumn).fill(null).concat([`Remise Club (${state.clubDiscount}%) TTC (Info):`, { t: 'n', v: -totals.discountAmountTTC, z: '#,##0.00 €' }]),
-                 Array(totalsStartColumn).fill(null).concat(['Frais création graphique HT:', { t: 'n', v: totals.appliedGraphicFeeHT, z: '#,##0.00 €' }]),
-                 Array(totalsStartColumn).fill(null).concat(['Frais création graphique TTC:', { t: 'n', v: totals.appliedGraphicFeeTTC, z: '#,##0.00 €' }]),
-                 Array(totalsStartColumn).fill(null).concat(['Frais de port HT:', { t: 'n', v: totals.shippingHT, z: '#,##0.00 €' }]),
-                 Array(totalsStartColumn).fill(null).concat(['Frais de port TTC:', { t: 'n', v: totals.shippingTTC, z: '#,##0.00 €' }]),
-                 Array(totalsStartColumn).fill(null).concat([{v: "Total Général HT:", s:{font:{bold:true}}}, { t: 'n', v: totals.grandTotalHT, z: '#,##0.00 €', s:{font:{bold:true}}}]),
-                 Array(totalsStartColumn).fill(null).concat([{v: "Total Général TTC:", s:{font:{bold:true}}}, { t: 'n', v: totals.grandTotalTTC, z: '#,##0.00 €', s:{font:{bold:true}}}]),
-                 Array(totalsStartColumn).fill(null).concat([{v: totals.downPaymentLabel, s:{font:{bold:true}}}, { t: 'n', v: totals.downPayment, z: '#,##0.00 €', s:{font:{bold:true}}}])
-             );
-             const yellowFill = { fgColor: { rgb: "FFFF00" } };
-             const observationsSection = [ [], [],
-                  [{ v: 'OBSERVATIONS GENERALES', s: { font: { bold: true, sz: 12 }, fill: yellowFill } }],
-                  [{ v: 'Prix indiqués en HT et TTC.', s: { fill: yellowFill } }], [{ v: 'Documents à contrôler.', s: { fill: yellowFill } }],
-                  [{ v: 'Nous informer si modifications à effectuer.', s: { fill: yellowFill } }],
-                  [{ v: 'Ce document est une précommande et non le document final, NORET se garde le droit d\'apporter des modifications et seul l\'accusé de réception envoyé pour validation et signature sera pris en compte.', s: { fill: yellowFill, alignment: { wrapText: true } } }]
-             ];
-             observationsSection.forEach(row => {
-                  row[0] = row[0] || {v: ""};
-                  for(let i=1; i < 6; i++){ row.push({v: "", s: {fill: yellowFill}}); }
+            html += `</div></div>`;
+            container.innerHTML = html;
+        };
+
+        const renderGeneralTariffTable = () => {
+             const quantityHeaders = ['1', '2', '3-4', '5-14', '15-24', '25-49', '50-79', '80-149', '150+'];
+             const quantitiesForCalc = [1, 2, 3, 5, 15, 25, 50, 80, 150];
+             let headerHtml = quantityHeaders.map(q => `<th scope="col" class="px-4 py-3 text-center">${q}</th>`).join('');
+
+             let html = `<table class="w-full text-sm text-left text-gray-500"><thead class="text-xs text-gray-700 uppercase bg-gray-100 sticky top-0"><tr><th scope="col" class="px-6 py-3">Article</th>${headerHtml}</tr></thead><tbody>`;
+
+             const products = allAvailableProducts.filter(p => p.category !== 'option');
+             const options = allAvailableProducts.filter(p => p.category === 'option');
+             
+             const renderProductRow = (product) => {
+                 const color = groupColors[product.pricingGroup];
+                 const rowStyle = color ? `style="background-color: ${color}80"` : '';
+                 const rowClass = color ? '' : 'bg-white';
+                 let rowHtml = `<tr class="border-b hover:brightness-95 transition-all ${rowClass}" ${rowStyle}><td class="px-6 py-4 font-medium text-gray-900">${product.name}</td>`;
+                 
+                 if (product.subtype === 'ACCESSOIRES PERSONNALISÉS' && product.minQuantity >= 50) {
+                     const prices = product.pricingTiers.map(t => `<strong>${t.quantity}+:</strong> ${t.price.toFixed(2)}€`).join('<span class="mx-2 text-gray-300">|</span>');
+                     rowHtml += `<td class="px-6 py-4 text-center text-xs" colspan="${quantitiesForCalc.length}">${prices}</td>`;
+                 } else if (product.subtype === 'ACCESSOIRES PERSONNALISÉS' && product.pricingTiers) {
+                     const prices = product.pricingTiers.map(t => `<strong>${t.quantity}+:</strong> ${t.price.toFixed(2)}€`).join('<span class="mx-2 text-gray-300">|</span>');
+                     rowHtml += `<td class="px-6 py-4 text-center text-xs" colspan="${quantitiesForCalc.length}">${prices}</td>`;
+                 } else if (product.price || product.fixedPriceTTC) {
+                     const priceStr = `${(product.price || product.fixedPriceTTC).toFixed(2)} €`;
+                     rowHtml += `<td class="px-6 py-4 text-center" colspan="${quantitiesForCalc.length}">${priceStr}</td>`;
+                 } else if (product.pricingTiers) {
+                     quantitiesForCalc.forEach(qty => {
+                         const price = getPriceForQuantity(product.pricingTiers, qty);
+                         rowHtml += `<td class="px-4 py-4 text-center">${price.toFixed(2)} €</td>`;
+                     });
+                 } else {
+                      rowHtml += `<td class="px-6 py-4 text-center" colspan="${quantitiesForCalc.length}">N/A</td>`;
+                 }
+                 rowHtml += `</tr>`;
+                 return rowHtml;
+             };
+
+             const cyclingSubtypeOrder = ['Maillots Manches Courtes', 'Maillots Manches Longues', 'Essentiels et Vestes', 'Cuissards Courts', 'Corsaires/Collants', 'Combinaisons'];
+             const runningSubtypeOrder = ['Hauts', 'Bas', 'Trifonctions'];
+
+             html += `<tr class="bg-gray-200"><td colspan="${quantitiesForCalc.length + 1}" class="px-6 py-2 font-bold text-gray-800">Cyclisme</td></tr>`;
+             const cyclingProducts = products.filter(p => p.category === 'CYCLISME');
+             const cyclingGrouped = cyclingProducts.reduce((acc, p) => { if (!acc[p.subtype]) acc[p.subtype] = []; acc[p.subtype].push(p); return acc; }, {});
+             cyclingSubtypeOrder.forEach(subtypeKey => {
+                 if (cyclingGrouped[subtypeKey]) {
+                     html += `<tr class="bg-gray-100"><td colspan="${quantitiesForCalc.length + 1}" class="px-6 py-2 font-semibold text-gray-700">${subtypeKey}</td></tr>`;
+                     cyclingGrouped[subtypeKey].forEach(product => { html += renderProductRow(product); });
+                 }
              });
-             dataForSheet.push(...observationsSection);
-              const wb = XLSX.utils.book_new();
-              const ws = XLSX.utils.aoa_to_sheet(dataForSheet);
-              ws['!cols'] = activeHeaders.map(h => ({wch: h.label.length > 20 ? 50 : 20}));
-             const mergeStartRow = dataForSheet.length - observationsSection.length + 2;
-             if (!ws['!merges']) ws['!merges'] = [];
-             ws['!merges'].push({ s: { r: mergeStartRow, c: 0 }, e: { r: mergeStartRow, c: 5 } }, { s: { r: mergeStartRow + 1, c: 0 }, e: { r: mergeStartRow + 1, c: 5 } },
-                                { s: { r: mergeStartRow + 2, c: 0 }, e: { r: mergeStartRow + 2, c: 5 } }, { s: { r: mergeStartRow + 3, c: 0 }, e: { r: mergeStartRow + 3, c: 5 } },
-                                { s: { r: mergeStartRow + 4, c: 0 }, e: { r: mergeStartRow + 4, c: 5 } });
-              XLSX.utils.book_append_sheet(wb, ws, 'Devis');
-              XLSX.writeFile(wb, `devis-bon-de-commande_${state.clubName.replace(/ /g, '_') || 'commande'}_${state.orderDate}.xlsx`);
+
+             html += `<tr class="bg-gray-200"><td colspan="${quantitiesForCalc.length + 1}" class="px-6 py-2 font-bold text-gray-800">Running</td></tr>`;
+             const runningProducts = products.filter(p => p.category === 'RUNNING');
+             const runningGrouped = runningProducts.reduce((acc, p) => { if (!acc[p.subtype]) acc[p.subtype] = []; acc[p.subtype].push(p); return acc; }, {});
+              runningSubtypeOrder.forEach(subtypeKey => {
+                 if(runningGrouped[subtypeKey]) {
+                     html += `<tr class="bg-gray-100"><td colspan="${quantitiesForCalc.length + 1}" class="px-6 py-2 font-semibold text-gray-700">${subtypeKey}</td></tr>`;
+                     runningGrouped[subtypeKey].forEach(product => { html += renderProductRow(product); });
+                 }
+             });
+
+             html += `<tr class="bg-gray-200"><td colspan="${quantitiesForCalc.length + 1}" class="px-6 py-2 font-bold text-gray-800">Gamme Enfants</td></tr>`;
+             products.filter(p => p.category === 'ENFANTS').forEach(product => { html += renderProductRow(product); });
+             
+             html += `<tr class="bg-gray-200"><td colspan="${quantitiesForCalc.length + 1}" class="px-6 py-2 font-bold text-gray-800">Accessoires Personnalisés</td></tr>`;
+             products.filter(p => p.subtype === 'ACCESSOIRES PERSONNALISÉS').forEach(product => { html += renderProductRow(product); });
+
+             html += `<tr class="bg-gray-200"><td colspan="${quantitiesForCalc.length + 1}" class="px-6 py-2 font-bold text-gray-800">Accessoires Permanents</td></tr>`;
+             products.filter(p => p.subtype === 'ACCESSOIRES PERMANENTS').forEach(product => { html += renderProductRow(product); });
+
+             html += `<tr class="bg-gray-200"><td colspan="${quantitiesForCalc.length + 1}" class="px-6 py-2 font-bold text-gray-800">OPTIONS</td></tr>`;
+             html += `<tr><td colspan="${quantitiesForCalc.length + 1}" class="px-6 py-1 text-xs text-center italic text-gray-600 bg-gray-50">Applicable sur les articles d'une même catégorie et à ajouter au coût de l'article.</td></tr>`;
+             options.forEach(option => { html += renderProductRow(option); });
+
+             html += `</tbody></table>`;
+             tariffModalBody.innerHTML = html;
         };
         
-        const handleEmail = () => {
-             if (!state.isOrderValidated) {
-                  const p = document.createElement('p'); p.textContent = "Veuillez d'abord valider la commande en cliquant sur 'Sauvegarder la Commande' avant de l'envoyer.";
-                  showModal(dom.mainModal, 'Envoi impossible', p); return;
-             }
-             if (!state.clubName || !state.clientNumber) {
-                 const p = document.createElement('p'); p.textContent = "Veuillez renseigner le nom du club et le N° client avant d'envoyer l'e-mail.";
-                 showModal(dom.mainModal, 'Information manquante', p); return;
-             }
-             const to = "aude@noret.com"; const subject = `Précommande - ${state.clubName} - ${state.clientNumber}`;
-             const body = `Bonjour,\n\nVeuillez trouver le bon de commande en pièce jointe.\n\nRappel du N° de Précommande : ${state.preOrderNumber || 'Non spécifié'}\nRappel des spécificités de la commande : ${state.orderSpecificity || 'Aucune'}\n\n----------------------------------------------------------------\nIMPORTANT : N'oubliez pas de joindre le fichier PDF du bon de commande que vous avez généré.\n----------------------------------------------------------------\n\nCordialement,`;
-             const mailtoLink = `mailto:${to}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-             const p = document.createElement('p');
-             p.innerHTML = `Vous allez être redirigé vers votre client de messagerie par défaut pour envoyer un e-mail à <b>aude@noret.com</b>.<br><br><b class="text-red-600">N'oubliez pas de joindre manuellement le fichier PDF</b> que vous avez généré avec le bouton "Exporter en PDF".<br><br>Cliquez sur "Continuer" pour ouvrir votre client de messagerie.`;
-             const actions = [
-                 { label: 'Annuler', onClick: () => hideModal(dom.mainModal), className: 'bg-gray-300' },
-                 { label: 'Continuer', onClick: () => { window.location.href = mailtoLink; hideModal(dom.mainModal); }, className: 'bg-blue-600 hover:bg-blue-700' }
-             ];
-             showModal(dom.mainModal, "Préparer l'envoi par e-mail", p, actions);
-        };
+        // =================================================================================
+        // --- EVENT HANDLERS & INITIALIZATION ---
+        // =================================================================================
         
-        const switchToTab = (tabId) => {
-            document.querySelectorAll('.main-tab-btn').forEach(btn => {
-                btn.classList.remove('border-indigo-500', 'text-indigo-600'); btn.classList.add('text-gray-500', 'hover:text-gray-700');
+        categoryFiltersContainer.addEventListener('click', (e) => {
+            if (e.target.id === 'select-all-gamme-check' || (e.target.tagName === 'LABEL' && e.target.htmlFor === 'select-all-gamme-check')) {
+                return;
+            }
+
+            const trigger = e.target.closest('.collapsible-trigger');
+            if (trigger) {
+                const parentContainer = trigger.parentElement;
+                const siblings = [...parentContainer.parentElement.children].filter(child => child !== parentContainer && child.classList.contains('collapsible-container'));
+                siblings.forEach(sibling => sibling.classList.remove('is-open'));
+                parentContainer.classList.toggle('is-open');
+            }
+            const productBtn = e.target.closest('.add-product-btn');
+            if (productBtn) {
+                addProductToGrid(productBtn.dataset.productName);
+            }
+        });
+
+        categoryFiltersContainer.addEventListener('change', e => {
+            if (e.target.id === 'select-all-gamme-check') {
+                const isChecked = e.target.checked;
+                const allCheckboxes = categoryFiltersContainer.querySelectorAll('.product-select-check');
+                allCheckboxes.forEach(checkbox => {
+                    if (checkbox.checked !== isChecked) {
+                        checkbox.checked = isChecked;
+                        checkbox.dispatchEvent(new Event('change', { bubbles: true }));
+                    }
+                });
+            } else if (e.target.classList.contains('product-select-check')) {
+                const productName = e.target.dataset.productName;
+                if (e.target.checked) {
+                    if (quoteState.gammeClubMode) {
+                        addItemToQuote(productName);
+                        updateUI();
+                    } else { // Devis mode
+                        addProductToGrid(productName);
+                    }
+                } else {
+                    removeItemFromQuote(productName);
+                    const sanitizedId = sanitizeForId(productName);
+                    document.getElementById(`product-card-${sanitizedId}`)?.remove();
+                    if (Object.keys(quoteState.items).length === 0) {
+                         productGrid.innerHTML = `<div id="product-placeholder" class="col-span-full text-center py-24 text-gray-500"><svg xmlns="http://www.w3.org/2000/svg" class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1"><path stroke-linecap="round" stroke-linejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg><h3 class="mt-2 text-sm font-medium text-gray-900">La sélection est vide</h3><p class="mt-1 text-sm text-gray-500">Utilisez le menu de gauche pour ajouter des articles.</p></div>`;
+                    }
+                    updateUI();
+                }
+            }
+        });
+
+        productGrid.addEventListener('click', (e) => {
+            const removeBtn = e.target.closest('.remove-product-btn');
+            if (removeBtn) {
+                const productName = removeBtn.dataset.productName;
+                removeItemFromQuote(productName);
+                document.getElementById(`product-card-${sanitizeForId(productName)}`)?.remove();
+                
+                const checkbox = document.getElementById(`select-check-${sanitizeForId(productName)}`);
+                if(checkbox) checkbox.checked = false;
+
+                if (Object.keys(quoteState.items).length === 0) {
+                    productGrid.innerHTML = `<div id="product-placeholder" class="col-span-full text-center py-24 text-gray-500"><svg xmlns="http://www.w3.org/2000/svg" class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1"><path stroke-linecap="round" stroke-linejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg><h3 class="mt-2 text-sm font-medium text-gray-900">La sélection est vide</h3><p class="mt-1 text-sm text-gray-500">Utilisez le menu de gauche pour ajouter des articles.</p></div>`;
+                }
+                updateUI();
+            }
+            const techLink = e.target.closest('.tech-sheet-link');
+            if (techLink && techLink.getAttribute('href') === '#') {
+                e.preventDefault();
+                showAlert('Lien vers la fiche technique non disponible pour cet article.');
+            }
+        });
+
+        productGrid.addEventListener('input', (e) => {
+            if (e.target.classList.contains('quantity-input')) {
+                const productName = e.target.dataset.productName;
+                const quantity = parseInt(e.target.value, 10) || 0;
+                if (quoteState.items[productName]) {
+                    quoteState.items[productName].quantity = quantity;
+                    updateAllCalculationsAndRenderDetailedSummary();
+                }
+            }
+        });
+
+        productGrid.addEventListener('change', (e) => {
+            if (e.target.classList.contains('option-checkbox') || e.target.classList.contains('option-radio')) {
+                const { productName, optionName } = e.target.dataset;
+                if (quoteState.items[productName]) {
+                    if (e.target.type === 'radio') {
+                         const group = e.target.name;
+                         document.querySelectorAll(`input[name="${group}"]`).forEach(radio => {
+                             if(radio !== e.target) quoteState.items[productName].options.delete(radio.dataset.optionName);
+                         });
+                    }
+                    if (e.target.checked) quoteState.items[productName].options.add(optionName);
+                    else quoteState.items[productName].options.delete(optionName);
+                    
+                    if (quoteState.devisMode) updateAllCalculationsAndRenderDetailedSummary();
+                }
+            }
+        });
+
+        gammeClubModeCheck.addEventListener('change', (e) => {
+            quoteState.gammeClubMode = e.target.checked;
+            if (quoteState.gammeClubMode) {
+                quoteState.devisMode = false;
+                devisModeCheck.checked = false;
+                maquetteLinkContainer.style.display = 'block';
+                productGrid.innerHTML = `<div id="product-placeholder" class="col-span-full text-center py-24 text-gray-500">
+                     <svg xmlns="http://www.w3.org/2000/svg" class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1">
+                       <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                     </svg>
+                     <h3 class="mt-2 text-sm font-medium text-gray-900">Mode Gamme Club</h3>
+                     <p class="mt-1 text-sm text-gray-500">Cochez les articles dans le menu de gauche pour composer votre gamme. La sélection apparaîtra dans le PDF.</p>
+                   </div>`;
+            } else {
+                maquetteLinkContainer.style.display = 'none';
+                productGrid.innerHTML = '';
+                const itemsToRender = Object.keys(quoteState.items);
+                if (itemsToRender.length > 0) {
+                    itemsToRender.forEach(createAndAppendProductCard);
+                } else {
+                     productGrid.innerHTML = `<div id="product-placeholder" class="col-span-full text-center py-24 text-gray-500"><svg xmlns="http://www.w3.org/2000/svg" class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1"><path stroke-linecap="round" stroke-linejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg><h3 class="mt-2 text-sm font-medium text-gray-900">La sélection est vide</h3><p class="mt-1 text-sm text-gray-500">Utilisez le menu de gauche pour ajouter des articles.</p></div>`;
+                }
+            }
+            renderSidebarNavigation();
+            updateUI();
+        });
+        
+        devisModeCheck.addEventListener('change', (e) => {
+            quoteState.devisMode = e.target.checked;
+            if (quoteState.devisMode) {
+                quoteState.gammeClubMode = false;
+                gammeClubModeCheck.checked = false;
+                maquetteLinkContainer.style.display = 'none';
+                 productGrid.innerHTML = ''; // Clear grid
+                const itemsToRender = Object.keys(quoteState.items);
+                if (itemsToRender.length > 0) {
+                    itemsToRender.forEach(createAndAppendProductCard);
+                } else {
+                     productGrid.innerHTML = `<div id="product-placeholder" class="col-span-full text-center py-24 text-gray-500"><svg xmlns="http://www.w3.org/2000/svg" class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1"><path stroke-linecap="round" stroke-linejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg><h3 class="mt-2 text-sm font-medium text-gray-900">Mode Devis</h3><p class="mt-1 text-sm text-gray-500">Cochez des articles à gauche pour les ajouter au devis.</p></div>`;
+                }
+            }
+            renderSidebarNavigation();
+            updateUI();
+        });
+
+
+        const modeRadios = document.querySelectorAll('input[name="mode-selection"]');
+        modeRadios.forEach(radio => {
+            radio.addEventListener('change', (e) => {
+                const isGamme = e.target.id === 'gamme-club-mode-check' && e.target.checked;
+                const isDevis = e.target.id === 'devis-mode-check' && e.target.checked;
+
+                quoteState.gammeClubMode = isGamme;
+                quoteState.devisMode = isDevis;
+                maquetteLinkContainer.style.display = isGamme ? 'block' : 'none';
+
+                productGrid.innerHTML = ''; // Always clear the grid on mode change
+
+                if (isGamme) {
+                     productGrid.innerHTML = `<div id="product-placeholder" class="col-span-full text-center py-24 text-gray-500">
+                         <svg xmlns="http://www.w3.org/2000/svg" class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1">
+                           <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                         </svg>
+                         <h3 class="mt-2 text-sm font-medium text-gray-900">Mode Gamme Club</h3>
+                         <p class="mt-1 text-sm text-gray-500">Cochez les articles dans le menu de gauche pour composer votre gamme.</p>
+                       </div>`;
+                } else { // Devis or Presentation mode
+                    const itemsToRender = Object.keys(quoteState.items);
+                    if (itemsToRender.length > 0) {
+                        itemsToRender.forEach(createAndAppendProductCard);
+                    } else {
+                        const placeholderTitle = isDevis ? "Mode Devis" : "Mode Présentation";
+                        const placeholderText = isDevis ? "Cochez des articles à gauche pour les ajouter au devis." : "Utilisez le menu de gauche pour commencer à construire votre document.";
+                         productGrid.innerHTML = `<div id="product-placeholder" class="col-span-full text-center py-24 text-gray-500">
+                             <svg xmlns="http://www.w3.org/2000/svg" class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1">
+                               <path stroke-linecap="round" stroke-linejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                             </svg>
+                             <h3 class="mt-2 text-sm font-medium text-gray-900">${placeholderTitle}</h3>
+                             <p class="mt-1 text-sm text-gray-500">${placeholderText}</p>
+                           </div>`;
+                    }
+                }
+                
+                renderSidebarNavigation();
+                updateUI();
             });
-            const tabButton = document.querySelector(`[data-tab-id="${tabId}"]`);
-            tabButton.classList.add('border-indigo-500', 'text-indigo-600'); tabButton.classList.remove('text-gray-500', 'hover:text-gray-700');
-            document.querySelectorAll('.main-tab-content').forEach(content => content.classList.remove('active'));
-            document.getElementById(tabId).classList.add('active');
+        });
+
+
+        customCreationCheck.addEventListener('change', (e) => {
+            quoteState.customCreation = e.target.checked;
+             updateUI();
+        });
+        clubNameInput.addEventListener('input', (e) => quoteState.clubName = e.target.value);
+        maquetteLinkInput.addEventListener('input', (e) => quoteState.maquetteLink = e.target.value);
+        
+        summaryBar.addEventListener('click', (e) => {
+            const targetId = e.target.id;
+            if (targetId === 'reset-summary-btn') {
+                quoteState.items = {};
+                productGrid.innerHTML = `<div id="product-placeholder" class="col-span-full text-center py-24 text-gray-500"><svg xmlns="http://www.w3.org/2000/svg" class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1"><path stroke-linecap="round" stroke-linejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg><h3 class="mt-2 text-sm font-medium text-gray-900">La sélection est vide</h3><p class="mt-1 text-sm text-gray-500">Utilisez le menu de gauche pour ajouter des articles.</p></div>`;
+                renderSidebarNavigation();
+                updateUI();
+            } else if (targetId === 'export-devis-pdf-btn') {
+                showPdfSelectionModal((selectedItems) => {
+                    generatePdf(selectedItems);
+                });
+            } else if (targetId === 'email-devis-btn') {
+                if (!quoteState.clubName) return showAlert("Veuillez saisir un nom de club avant d'envoyer un e-mail.", "Action Requise");
+                showPdfSelectionModal((selectedItems) => {
+                    const success = generatePdf(selectedItems);
+                    if (success) {
+                        let docType = 'présentation tarifaire';
+                        if (quoteState.devisMode) docType = 'devis';
+                        if (quoteState.gammeClubMode) docType = 'présentation de la gamme club';
+                        const subject = `Votre ${docType} Noret pour ${quoteState.clubName}`;
+                        const body = `Bonjour,\n\nJe vous envoie ci-joint le document suite à votre demande.\nN’hésitez pas à me dire si vous avez des questions ou si vous souhaitez que l’on ajuste certains points, je suis à votre disposition pour en discuter.\nEn espérant que cette proposition corresponde à vos attentes,\n\nje vous souhaite une belle journée et à très bientôt.\nSportivement,\n\nWilfrid`;
+                        showAlert(
+                            "Le document PDF a été généré et téléchargé. Veuillez le joindre manuellement à l'e-mail qui va s'ouvrir.", "PDF Généré",
+                            () => { window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`; }
+                        );
+                    }
+                });
+            }
+        });
+
+        [conseilModal, alertModal, tariffModal].forEach(modal => {
+            modal.addEventListener('click', (e) => { if (e.target === modal) modal.classList.add('hidden'); });
+        });
+        conseilModalCloseBtn.addEventListener('click', hideConseilModal);
+        tariffModalCloseBtn.addEventListener('click', hideTariffModal);
+        generalTariffBtn.addEventListener('click', showTariffModal);
+        alertModalCloseBtn.addEventListener('click', hideAlert);
+        
+        pdfSelectionCancelBtn.addEventListener('click', () => pdfSelectionModal.classList.add('hidden'));
+        pdfSelectAllBtn.addEventListener('click', () => pdfSelectionList.querySelectorAll('.pdf-item-check').forEach(cb => cb.checked = true));
+        pdfDeselectAllBtn.addEventListener('click', () => pdfSelectionList.querySelectorAll('.pdf-item-check').forEach(cb => cb.checked = false));
+        pdfSelectionConfirmBtn.addEventListener('click', () => {
+            const selectedItems = Array.from(pdfSelectionList.querySelectorAll('.pdf-item-check:checked')).map(cb => cb.dataset.itemName);
+            if (selectedItems.length === 0) {
+                showAlert("Veuillez sélectionner au moins un article pour le PDF.", "Aucune sélection");
+                return;
+            }
+            if (pdfConfirmCallback) {
+                pdfConfirmCallback(selectedItems);
+            }
+            pdfSelectionModal.classList.add('hidden');
+            pdfConfirmCallback = null;
+        });
+        
+        // =================================================================================
+        // --- EXPORT & EMAIL LOGIC ---
+        // =================================================================================
+
+        const showPdfSelectionModal = (onConfirm) => {
+            if (Object.keys(quoteState.items).length === 0) {
+                showAlert("Veuillez ajouter des articles avant d'exporter.", "Exportation Impossible");
+                return;
+            }
+            pdfConfirmCallback = onConfirm;
+            pdfSelectionList.innerHTML = Object.keys(quoteState.items).sort().map(itemName => `
+                <div class="flex items-center p-1">
+                    <input type="checkbox" id="pdf-check-${sanitizeForId(itemName)}" data-item-name="${itemName}" class="pdf-item-check h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" checked>
+                    <label for="pdf-check-${sanitizeForId(itemName)}" class="ml-3 block text-sm text-gray-800 cursor-pointer">${itemName}</label>
+                </div>
+            `).join('');
+            pdfSelectionModal.classList.remove('hidden');
+            pdfSelectionModal.classList.add('flex');
         };
 
-        const promptForSavedOrdersAccess = () => {
-            const container = document.createElement('div'); container.className = 'space-y-4';
-            const p = document.createElement('p'); p.textContent = "Pour accéder aux commandes sauvegardées, veuillez saisir le code d'autorisation.";
-            const input = document.createElement('input'); input.type = 'password'; input.id = 'access-code-input'; input.className = 'mt-1 block w-full rounded-md border-gray-300 shadow-sm';
-            const errorMsg = document.createElement('p'); errorMsg.id = 'access-code-error'; errorMsg.className = 'text-red-500 text-sm hidden'; errorMsg.textContent = 'Code incorrect.';
-            container.appendChild(p); container.appendChild(input); container.appendChild(errorMsg);
-            const actions = [
-                { label: 'Annuler', onClick: () => hideModal(dom.mainModal), className: 'bg-gray-300' },
-                { label: 'Confirmer', onClick: () => {
-                    if (document.getElementById('access-code-input').value === '582069') {
-                        state.isSavedOrdersTabLocked = false; hideModal(dom.mainModal); switchToTab('saved-orders');
-                    } else {
-                        document.getElementById('access-code-error').classList.remove('hidden'); document.getElementById('access-code-input').classList.add('border-red-500'); input.focus();
-                    }
-                }, className: 'bg-green-600 hover:bg-green-700' }
-            ];
-            showModal(dom.mainModal, 'Accès Protégé', container, actions);
-        };
+        const generatePdf = (selectedItems) => {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            const { devisMode, gammeClubMode, maquetteLink, customCreation } = quoteState;
+            
+            let docTitle = 'PRESENTATION TARIFAIRE';
+            if (devisMode && customCreation) docTitle = 'DEVIS - CRÉATION PERSONNALISÉE';
+            else if (devisMode) docTitle = 'DEVIS - RÉASSORT';
+            else if (gammeClubMode && customCreation) docTitle = 'GAMME CLUB - PROPOSITION TEAM';
+            else if (gammeClubMode) docTitle = 'GAMME CLUB';
 
-        // --- INITIALIZATION ---
-        const init = () => {
-            handleUrlParameters();
-            dom.orderDate.value = new Date().toISOString().split('T')[0];
-            const savedClients = localStorage.getItem('clientDatabase');
-            if (savedClients) clientDatabase = JSON.parse(savedClients);
-            updateDatalists();
-            const savedOrdersData = localStorage.getItem('savedOrdersDB');
-            if (savedOrdersData) state.savedOrders = JSON.parse(savedOrdersData);
-            document.body.addEventListener('input', (e) => {
-                 if (!e.target) return;
-                 state.isOrderValidated = false;
-                 const { id, value } = e.target;
-                 if (id === 'clubName') {
-                    state.clubName = value;
-                    const found = clientDatabase.find(c => c.clubName === value);
-                    if (found) { state.clientNumber = found.clientNumber; dom.clientNumber.value = found.clientNumber; state.departement = found.departement || ''; dom.departement.value = state.departement; }
-                 } else if (id === 'clientNumber') {
-                    state.clientNumber = value;
-                    const found = clientDatabase.find(c => c.clientNumber === value);
-                    if (found) { state.clubName = found.clubName; dom.clubName.value = found.clubName; state.departement = found.departement || ''; dom.departement.value = state.departement; }
-                 } else if (id === 'departement') {
-                     state.departement = value;
-                 }
-            });
-            document.body.addEventListener('focusout', (e) => {
-                if (e.target.id === 'clubName' || e.target.id === 'clientNumber' || e.target.id === 'departement') saveClientInfo();
-            });
-            document.body.addEventListener('change', (e) => {
-                if (!e.target) return;
-                state.isOrderValidated = false;
-                if (e.target.id === 'preOrderNumber') state.preOrderNumber = e.target.value;
-                if (e.target.id === 'orderDate') {
-                     state.orderDate = e.target.value;
-                     if(state.documentType === 'quote') { const date = new Date(state.orderDate); state.quoteNumber = `${String(date.getDate()).padStart(2, '0')}${String(date.getMonth() + 1).padStart(2, '0')}${date.getFullYear()}`; }
-                }
-                if (e.target.id === 'orderSpecificity') state.orderSpecificity = e.target.value;
-                if (e.target.id === 'licencieName') state.licencieName = e.target.value;
-                if (e.target.id === 'clubDiscount') state.clubDiscount = parseFloat(e.target.value) || 0;
-                if (e.target.name === 'doc-type') {
-                    state.documentType = e.target.value;
-                    if(state.documentType === 'quote') { state.isReassort = false; state.orderScope = 'global'; const date = new Date(state.orderDate); state.quoteNumber = `${String(date.getDate()).padStart(2, '0')}${String(date.getMonth() + 1).padStart(2, '0')}${date.getFullYear()}`; }
-                }
-                 if (e.target.id === 'doc-type-reassort') {
-                      const checked = e.target.checked;
-                      const action = () => { state.isReassort = checked; state.currentOrderLineItems = []; if (checked) state.documentType = 'order'; hideModal(dom.mainModal); renderAll(); };
-                      if (state.currentOrderLineItems.length > 0) {
-                          const p = document.createElement('p'); p.textContent = `Ce changement videra le panier actuel. Êtes-vous sûr de vouloir continuer ?`;
-                          showModal(dom.mainModal, 'Changement de mode', p, [
-                              {label: 'Annuler', onClick: () => {e.target.checked = !checked; hideModal(dom.mainModal)}, className: 'bg-gray-300'},
-                              {label: 'Continuer', onClick: action, className: 'bg-red-600'}
-                          ]);
-                      } else { action(); }
-                 }
-                if (e.target.id === 'custom-design-order-check') state.isCustomDesignOrder = e.target.checked;
-                if (e.target.id === 'imperatif-check') { state.isImperatif = e.target.checked; if (!state.isImperatif) state.imperatifNote = ''; }
-                if (e.target.id === 'imperatif-note') state.imperatifNote = e.target.value;
-                if (e.target.name === 'scope') state.orderScope = e.target.value;
-                if (e.target.id === 'store-order-check') state.isStoreOrder = e.target.checked;
-                if (e.target.id === 'apply-discount-check') { state.applyDiscount = e.target.checked; if (!state.applyDiscount) state.clubDiscount = 0; }
-                if (e.target.name === 'discount-type') state.discountType = e.target.value;
-                if (e.target.id === 'current-product-select') { state.currentProduct = e.target.value; resetProductFormFields(); calculateCurrentFormPrice(); }
-                if (e.target.classList.contains('size-input')) { state.currentQuantities[e.target.dataset.size] = e.target.value; calculateCurrentFormPrice(); }
-                if (e.target.id === 'accessory-qty' || e.target.id === 'quote-qty') { state.currentAccessoryQuantity = e.target.value; calculateCurrentFormPrice(); }
-                if (e.target.id === 'manual-price') state.manualUnitPrice = e.target.value;
-                if (e.target.id === 'current-color-select') state.currentColor = e.target.value;
-                if (e.target.id === 'specificity') state.currentSpecificity = e.target.value;
-                if (e.target.id === 'commercial-gesture-check') {
-                    if (e.target.checked) { promptForForceCode(() => { state.applyCommercialGesture = true; calculateCurrentFormPrice(); renderProductForm(); }); e.target.checked = false; } 
-                    else { state.applyCommercialGesture = false; calculateCurrentFormPrice(); }
-                }
-                if (e.target.classList.contains('option-checkbox')) {
-                    const optionName = e.target.dataset.optionName; const optionGroup = e.target.dataset.optionGroup;
-                    if (optionGroup === 'length') {
-                        const allLengthOptions = allAvailableProducts.filter(p => p.optionGroup === 'length').map(p => p.name);
-                        const nonLengthOptions = state.currentSelectedOptions.filter(opt => !allLengthOptions.includes(opt));
-                        state.currentSelectedOptions = e.target.checked ? [...nonLengthOptions, optionName] : nonLengthOptions;
-                    } else {
-                        state.currentSelectedOptions = e.target.checked ? [...state.currentSelectedOptions, optionName] : state.currentSelectedOptions.filter(o => o !== optionName);
+            // --- PDF Header ---
+            doc.setFontSize(18);
+            doc.text(`${docTitle} - ${quoteState.clubName || 'Interactif'}`, 14, 22);
+            doc.setFontSize(12);
+            doc.setFont(undefined, 'bold');
+            doc.setTextColor(0);
+            doc.text('Tarif TTC saison 2025/2026', 14, 29);
+            doc.setFontSize(11);
+            doc.setFont(undefined, 'normal');
+            doc.setTextColor(100);
+            doc.text(`Date: ${new Date().toLocaleDateString('fr-FR')}`, 14, 35);
+            let startY = 45;
+
+            if (gammeClubMode && maquetteLink) {
+                doc.setFontSize(12);
+                doc.setFont(undefined, 'bold');
+                doc.setTextColor(0, 0, 238);
+                doc.textWithLink('Cliquez ici pour voir la maquette du club', 14, startY, { url: maquetteLink });
+                doc.setTextColor(100);
+                startY += 10;
+            }
+
+            const tableBody = [];
+            const techLinks = new Map();
+            let finalYAfterTable;
+
+            if (devisMode) {
+                let subtotalTTC = 0;
+                const groupQuantities = {};
+                let totalNonAccessoryQty = 0; // For pricing logic AND fee calculation
+                for (const itemName in quoteState.items) {
+                    const product = productMap.get(itemName);
+                    const item = quoteState.items[itemName];
+                    if (product && item.quantity > 0) {
+                        if (product.type !== 'accessoire') {
+                            totalNonAccessoryQty += item.quantity;
+                        }
+                        if (product.pricingGroup) {
+                            groupQuantities[product.pricingGroup] = (groupQuantities[product.pricingGroup] || 0) + item.quantity;
+                        }
                     }
-                    calculateCurrentFormPrice();
                 }
-                renderAll();
-            });
-            document.body.addEventListener('click', (e) => {
-                 if (!e.target) return;
-                 if(e.target.id === 'add-product-btn' || e.target.parentElement?.id === 'add-product-btn') handleProductAdd();
-                 const actionTarget = e.target.closest('[data-action]');
-                 if(actionTarget){
-                     const { action, itemId } = actionTarget.dataset;
-                     if(action === 'remove-item'){ state.currentOrderLineItems = state.currentOrderLineItems.filter(item => item.id != itemId); state.isOrderValidated = false; renderAll(); }
-                     if(action === 'toggle-discount'){ state.currentOrderLineItems = state.currentOrderLineItems.map(item => item.id == itemId ? { ...item, applyDiscount: !item.applyDiscount } : item); state.isOrderValidated = false; renderAll(); }
-                    if (action === 'edit-item') {
-                         const itemToEdit = state.currentOrderLineItems.find(i => i.id == itemId);
-                         if (itemToEdit) {
-                             const product = allAvailableProducts.find(p => p.name === itemToEdit.productName);
-                             state.currentProduct = itemToEdit.productName; state.currentQuantities = itemToEdit.quantitiesPerSize;
-                             if(product?.type === 'accessoire' && (!product.sizeType || product.sizeType === 'unique')) state.currentAccessoryQuantity = itemToEdit.totalQuantity;
-                             else state.currentAccessoryQuantity = '';
-                             state.currentSelectedOptions = itemToEdit.options; state.currentSpecificity = itemToEdit.specificity;
-                             state.currentColor = itemToEdit.color; state.manualUnitPrice = itemToEdit.initialManualPrice || '';
-                             state.currentOrderLineItems = state.currentOrderLineItems.filter(i => i.id != itemId);
-                             state.isOrderValidated = false; renderAll();
+
+                if (customCreation) {
+                    let finalY = startY;
+                    doc.setFontSize(10);
+                    doc.setFont(undefined, 'bold');
+                    doc.text("Conditions spécifiques pour la création d'un nouveau visuel :", 14, finalY);
+                    finalY += 6;
+                    doc.setFont(undefined, 'normal');
+                    const noteText = [
+                        '- Minimum de commande pour une création : 10 pièces (hors accessoires).',
+                        '- Pour une commande de 10 à 19 pièces, un forfait maquette de 150€ TTC sera appliqué.',
+                        "- À partir de 20 pièces, le forfait maquette est offert."
+                    ].join('\n');
+                    doc.text(noteText, 14, finalY, { maxWidth: 180 });
+                    startY = finalY + 18;
+                }
+
+                const isSpecialCreationCase = quoteState.customCreation && totalNonAccessoryQty >= 10 && totalNonAccessoryQty < 20;
+
+                for (const itemName of selectedItems) {
+                     const product = productMap.get(itemName);
+                     const item = quoteState.items[itemName];
+                     if (!product || item.quantity === 0) continue;
+
+                     if (product.chamoisInfo?.link) techLinks.set(product.chamoisInfo.link, `FICHE TECHNIQUE ${product.chamoisInfo.name.toUpperCase()}${product.name.toUpperCase().includes('HOMME') ? ' HOMME' : (product.name.toUpperCase().includes('FEMME') ? ' FEMME' : '')}`);
+                     if (product.techSheetLink) techLinks.set(product.techSheetLink, `FICHE TECHNIQUE ${product.name}`);
+
+                    const pricingQty = product.pricingGroup ? groupQuantities[product.pricingGroup] : item.quantity;
+                     
+                     let unitPrice = product.price || getPriceForQuantity(product.pricingTiers, pricingQty) || 0;
+                     
+                     let optionsDesc = [];
+                     item.options.forEach(optName => {
+                         const optProduct = productMap.get(optName);
+                         if (optProduct) {
+                             optionsDesc.push(optName);
+                             unitPrice += optProduct.fixedPriceTTC || getPriceForQuantity(optProduct.pricingTiers, pricingQty) || 0;
                          }
-                    }
-                 }
-                 const mainTabTarget = e.target.closest('.main-tab-btn');
-                 if (mainTabTarget) {
-                    const tabId = mainTabTarget.dataset.tabId;
-                    if (tabId === 'saved-orders' && state.isSavedOrdersTabLocked) promptForSavedOrdersAccess();
-                    else switchToTab(tabId);
-                 }
-                 const productTabTarget = e.target.closest('.product-tab-btn');
-                 if(productTabTarget){
-                       document.querySelectorAll('.product-tab-btn').forEach(btn => {
-                            btn.classList.remove('border-indigo-500', 'text-indigo-600'); btn.classList.add('text-gray-500', 'hover:text-gray-700');
-                       });
-                       productTabTarget.classList.add('border-indigo-500', 'text-indigo-600'); productTabTarget.classList.remove('text-gray-500', 'hover:text-gray-700');
-                       state.activeTab = productTabTarget.dataset.tab; state.currentProduct = '';
-                       resetProductFormFields(); renderProductForm();
-                 }
-                if (e.target.id === 'new-order-btn') handleNewOrder();
-                if (e.target.id === 'save-order-btn') handleSaveOrderClick();
-                if (e.target.id === 'export-excel-btn') handleExportExcel();
-                if (e.target.id === 'export-pdf-btn') handleExportPdf();
-                if (e.target.id === 'send-email-btn') handleEmail();
-                if (e.target.id === 'main-modal-close-btn') hideModal(dom.mainModal);
-                if (e.target.id === 'excel-modal-validate-btn') hideModal(dom.excelModal);
-            });
-            dom.excelColumnsContainer.innerHTML = Object.keys(state.excelColumns).map(key => `<label class="flex items-center space-x-2"><input type="checkbox" data-column-key="${key}" class="excel-column-check" ${state.excelColumns[key] ? 'checked' : ''}/><span>${key.charAt(0).toUpperCase() + key.slice(1)}</span></label>`).join('');
-            dom.excelColumnsContainer.addEventListener('change', e => { if(e.target.classList.contains('excel-column-check')) state.excelColumns[e.target.dataset.columnKey] = e.target.checked; });
-            dom.savedOrdersList.addEventListener('click', (e) => {
-                const target = e.target.closest('[data-action]');
-                if (!target) return;
-                const orderId = parseInt(target.dataset.orderId, 10);
-                if (target.dataset.action === 'load-order') {
-                    const orderToLoad = state.savedOrders.find(o => o.orderId === orderId);
-                    if (orderToLoad) {
-                        resetForm();
-                        const loadedState = JSON.parse(JSON.stringify(orderToLoad));
-                        const orderKeys = [ 'orderId', 'isReassort', 'isCustomDesignOrder', 'isStoreOrder', 'applyDiscount', 'clubName', 'departement', 'clientNumber', 'preOrderNumber', 'quoteNumber', 'orderDate', 'licencieName', 'clubDiscount', 'currentOrderLineItems', 'discountType', 'orderScope', 'documentType', 'orderSpecificity', 'isImperatif', 'imperatifNote' ];
-                        orderKeys.forEach(key => { if (loadedState[key] !== undefined) state[key] = loadedState[key]; });
-                        state.currentOrderLineItems = state.currentOrderLineItems || [];
-                        state.isOrderValidated = true; switchToTab('order-creation'); renderAll();
-                    }
-                } else if (target.dataset.action === 'delete-order') {
-                    const p = document.createElement('p'); p.textContent = 'Êtes-vous sûr de vouloir supprimer cette commande ? Cette action est irréversible.';
-                    showModal(dom.mainModal, 'Confirmer la suppression', p, [
-                        { label: 'Annuler', onClick: () => hideModal(dom.mainModal), className: 'bg-gray-300' },
-                        { label: 'Supprimer', onClick: () => {
-                                state.savedOrders = state.savedOrders.filter(o => o.orderId !== orderId);
-                                localStorage.setItem('savedOrdersDB', JSON.stringify(state.savedOrders));
-                                renderSavedOrders(); hideModal(dom.mainModal);
-                            }, className: 'bg-red-600' }
-                    ]);
+                     });
+                     const totalLinePrice = unitPrice * item.quantity;
+                     subtotalTTC += totalLinePrice;
+                     
+                     let productTitle = itemName;
+
+                     let details = [];
+                     details.push(summarizeSizes(sizeData[product.type === 'enfant' ? 'enfant' : (product.sizeType || 'default')] || sizeData.default));
+                     if (product.pricingGroup) {
+                         const otherItemsInGroup = allAvailableProducts.filter(p => p.pricingGroup === product.pricingGroup && p.name !== itemName).map(p => p.name);
+                         if (otherItemsInGroup.length > 0) {
+                             let groupText = `Prix groupé avec : ${otherItemsInGroup.join(', ')}`;
+                             if (product.pricingGroup === 'giletCoupeVent') {
+                                 groupText += " (uniquement si visuel identique)";
+                             }
+                             details.push(groupText);
+                         }
+                     }
+                     productTitle += `\n(${details.join('\n')})`;
+
+                     if (optionsDesc.length > 0) {
+                        productTitle += `\n(Prix inclut option(s): ${optionsDesc.join(', ')})`;
+                     }
+
+                     if (product.pricingTiers) {
+                        let tierString;
+                        // Special display text for custom creation between 10 & 19 items
+                        if (isSpecialCreationCase && pricingQty >= 5) {
+                            if (pricingQty >= 15) { // The price is calculated on 15+, display as 15-19
+                                tierString = '(Tarif pour 15-19 pièces)';
+                            } else { // The price is calculated on 5+, display as 5-14
+                                tierString = '(Tarif pour 5-14 pièces)';
+                            }
+                        } else {
+                            // Use normal display logic for all other cases
+                            tierString = getTierRangeString(product.pricingTiers, pricingQty);
+                        }
+                        productTitle += `\n${tierString}`;
+                     }
+
+                     tableBody.push([productTitle, item.quantity, `${unitPrice.toFixed(2)} €`, `${totalLinePrice.toFixed(2)} €`]);
                 }
-            });
-            dom.exportOrdersJsonBtn.addEventListener('click', () => {
-                if (state.savedOrders.length === 0) { showModal(dom.mainModal, 'Exportation impossible', document.createTextNode("Il n'y a aucune commande à exporter.")); return; }
-                const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(JSON.stringify(state.savedOrders, null, 2));
-                let linkElement = document.createElement('a');
-                linkElement.setAttribute('href', dataUri); linkElement.setAttribute('download', 'commandes_sauvegardees.json');
-                linkElement.click();
-            });
-            dom.importOrdersJsonBtn.addEventListener('click', () => dom.jsonOrdersFileInput.click());
-            dom.jsonOrdersFileInput.addEventListener('change', (event) => {
-                const file = event.target.files[0]; if (!file) return;
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    try {
-                        const loadedOrders = JSON.parse(e.target.result);
-                        if (!Array.isArray(loadedOrders)) throw new Error("Fichier JSON invalide.");
-                        const p = document.createElement('p'); p.textContent = 'Fusionner les nouvelles commandes avec la liste existante, ou remplacer entièrement la liste ?';
-                        showModal(dom.mainModal, 'Charger des commandes', p, [
-                            { label: 'Annuler', onClick: () => hideModal(dom.mainModal), className: 'bg-gray-300' },
-                            { label: 'Fusionner', onClick: () => {
-                                    const existingIds = new Set(state.savedOrders.map(o => o.orderId));
-                                    const newOrders = loadedOrders.filter(o => !existingIds.has(o.orderId));
-                                    state.savedOrders.push(...newOrders);
-                                    localStorage.setItem('savedOrdersDB', JSON.stringify(state.savedOrders));
-                                    renderSavedOrders(); hideModal(dom.mainModal);
-                                }, className: 'bg-blue-600' },
-                            { label: 'Remplacer', onClick: () => {
-                                    state.savedOrders = loadedOrders;
-                                    localStorage.setItem('savedOrdersDB', JSON.stringify(state.savedOrders));
-                                    renderSavedOrders(); hideModal(dom.mainModal);
-                                }, className: 'bg-red-600' }
-                        ]);
-                    } catch (error) { showModal(dom.mainModal, 'Erreur Fichier JSON', document.createTextNode(`Erreur de lecture : ${error.message}`)); } 
-                    finally { event.target.value = ''; }
-                };
-                reader.readAsText(file);
-            });
-            renderAll();
+
+                doc.autoTable({
+                    startY: startY,
+                    head: [['Article', 'Quantité', 'Prix U. TTC', 'Total Ligne TTC']],
+                    body: tableBody,
+                    theme: 'striped', headStyles: { fillColor: [79, 70, 229] }, styles: { fontSize: 9 }, columnStyles: { 0: { cellWidth: 100 } },
+                   didParseCell: data => { 
+                        if (data.column.index > 0) data.cell.styles.halign = 'center';
+                        if (data.column.index === 0) data.cell.styles.fontStyle = 'bold';
+                   }
+                });
+
+                finalYAfterTable = doc.autoTable.previous.finalY;
+                const subtotalHT = subtotalTTC / (1 + TVA_RATE);
+                let shippingHT = 0;
+                if (subtotalHT > 2000) shippingHT = 0; else if (subtotalHT > 1000) shippingHT = 14; else if (subtotalHT > 500) shippingHT = 12; else if (subtotalHT > 0) shippingHT = 9.50;
+                const shippingTTC = shippingHT * (1 + TVA_RATE);
+                const graphicFeeTTC = (quoteState.customCreation && totalNonAccessoryQty > 0 && totalNonAccessoryQty < 20) ? GRAPHIC_FEE_TTC : 0;
+                const graphicFeeHT = graphicFeeTTC / (1 + TVA_RATE);
+                const grandTotalHT = subtotalHT + shippingHT + graphicFeeHT;
+                const grandTotalTTC = subtotalTTC + shippingTTC + graphicFeeTTC;
+
+                const totalsData = [
+                    ['Sous-total HT:', `${subtotalHT.toFixed(2)} €`, 'Sous-total TTC:', `${subtotalTTC.toFixed(2)} €`],
+                    ['Frais de port HT:', `${shippingHT.toFixed(2)} €`, 'Frais de port TTC:', `${shippingTTC.toFixed(2)} €`],
+                ];
+                if (graphicFeeTTC > 0) {
+                    totalsData.push(['Forfait Création HT:', `${graphicFeeHT.toFixed(2)} €`, 'Forfait Création TTC:', `${graphicFeeTTC.toFixed(2)} €`]);
+                }
+                 totalsData.push(['Total HT:', `${grandTotalHT.toFixed(2)} €`, 'Total TTC:', `${grandTotalTTC.toFixed(2)} €`]);
+
+                doc.autoTable({
+                    startY: finalYAfterTable + 10,
+                    body: totalsData,
+                    theme: 'plain',
+                    tableWidth: 'wrap',
+                    margin: { left: 105 },
+                    styles: { fontSize: 9 },
+                    columnStyles: {
+                        0: { halign: 'right', fontStyle: 'bold' }, 1: { halign: 'right' },
+                        2: { halign: 'right', fontStyle: 'bold' }, 3: { halign: 'right' }
+                    },
+                    didParseCell: function (data) {
+                        if (data.row.index === totalsData.length - 1) {
+                            data.cell.styles.fontStyle = 'bold';
+                            if (data.column.index === 3) data.cell.styles.textColor = [79, 70, 229];
+                        }
+                        if (graphicFeeTTC > 0 && data.row.index === 2) {
+                             data.cell.styles.textColor = [220, 38, 38];
+                        }
+                    }
+                });
+
+                finalYAfterTable = doc.autoTable.previous.finalY;
+
+                doc.setTextColor(0);
+                doc.setFontSize(8); 
+                doc.setFont(undefined, 'italic');
+                doc.text("Ce devis est valable 1 mois à compter de la date d'émission.", 14, finalYAfterTable + 5);
+
+            } else {
+                const head = (gammeClubMode && customCreation) 
+                    ? [['Article', 'Prix TTC (5-14p)', 'Prix TTC (15-19p)']]
+                    : (gammeClubMode ? [['Article']] : [['Article', 'Grille Tarifaire TTC']]);
+                
+                if (gammeClubMode && customCreation) {
+                    let finalY = startY;
+                    doc.setFontSize(10);
+                    doc.setFont(undefined, 'bold');
+                    doc.text("Conditions spécifiques pour la création d'un nouveau visuel (TEAM) :", 14, finalY);
+                    finalY += 6;
+                    doc.setFont(undefined, 'normal');
+                    const noteText = [
+                        '- Minimum de commande : 10 pièces (hors accessoires).',
+                        '- Pour une commande de 10 à 19 pièces, un forfait maquette de 150€ TTC sera appliqué.',
+                        '- Les tarifs ci-dessous sont basés sur les tranches tarifaires "5-14 pièces" et "15-19 pièces".',
+                        "- À partir de 20 pièces, le forfait maquette est offert et les tarifs dégressifs normaux s'appliquent."
+                    ].join('\n');
+                    doc.text(noteText, 14, finalY, { maxWidth: 180 });
+                    startY = finalY + 25;
+                }
+
+                for (const itemName of selectedItems) {
+                    const product = productMap.get(itemName);
+                    if (!product) continue;
+                    
+                    if (product.chamoisInfo?.link) techLinks.set(product.chamoisInfo.link, `FICHE TECHNIQUE ${product.chamoisInfo.name.toUpperCase()}${product.name.toUpperCase().includes('HOMME') ? ' HOMME' : (product.name.toUpperCase().includes('FEMME') ? ' FEMME' : '')}`);
+                    if (product.techSheetLink) techLinks.set(product.techSheetLink, `FICHE TECHNIQUE ${product.name}`);
+                    
+                    let productNameWithDetails = product.name;
+                    let details = [];
+                    details.push(summarizeSizes(sizeData[product.type === 'enfant' ? 'enfant' : (product.sizeType || 'default')] || sizeData.default));
+                    if (product.pricingGroup) {
+                        const otherItemsInGroup = allAvailableProducts.filter(p => p.pricingGroup === product.pricingGroup && p.name !== itemName).map(p => p.name);
+                        if (otherItemsInGroup.length > 0) {
+                            let groupText = `Prix groupé avec : ${otherItemsInGroup.join(', ')}`;
+                            if (product.pricingGroup === 'giletCoupeVent') {
+                                groupText += " (uniquement si visuel identique)";
+                            }
+                            details.push(groupText);
+                        }
+                    }
+                    productNameWithDetails += `\n(${details.join('\n')})`;
+                    const rowData = [productNameWithDetails];
+
+                    if (gammeClubMode && customCreation) {
+                        const price5 = getPriceForQuantity(product.pricingTiers, 5) || product.price || 0;
+                        const price15 = getPriceForQuantity(product.pricingTiers, 15) || product.price || 0;
+                        rowData.push(`${price5.toFixed(2)} €`, `${price15.toFixed(2)} €`);
+                    } else if (!gammeClubMode) {
+                        let priceInfo = formatTiersForPdf(product.pricingTiers || [{ quantity: 1, price: product.price }]);
+                        
+                        const isLongSleeved = product.type === 'haut' && (product.name.includes('ML') || product.name.includes('MANCHES LONGUES'));
+                        const normalOptions = (product.hasOptions !== false && product.type !== 'accessoire' && !product.isCuissardOrCollant) ? allAvailableProducts.filter(p => p.category === 'option' && !p.optionGroup && !(product.excludedOptions || []).includes(p.name)) : [];
+                        const lengthOptions = (product.isCuissardOrCollant || isLongSleeved) ? allAvailableProducts.filter(p => p.optionGroup === 'length') : [];
+                        const allOptions = [...normalOptions, ...lengthOptions];
+
+                        if (allOptions.length > 0) {
+                            priceInfo += '\n\nOptions disponibles pour la gamme (prix TTC à ajouter) :';
+                            allOptions.forEach(opt => {
+                                priceInfo += `\n- ${opt.name}: ${opt.fixedPriceTTC.toFixed(2)} €`;
+                            });
+                        }
+                        
+                        rowData.push(priceInfo);
+                    }
+                    tableBody.push(rowData);
+                }
+
+                doc.autoTable({
+                    startY: startY,
+                    head: head,
+                    body: tableBody,
+                    theme: 'striped', 
+                    headStyles: { fillColor: (gammeClubMode && customCreation) ? [22, 163, 74] : (gammeClubMode ? [22, 163, 74] : [79, 70, 229]) }, 
+                    styles: { fontSize: 9 }, 
+                    columnStyles: { 
+                        0: { cellWidth: (gammeClubMode && customCreation) ? 100 : (gammeClubMode ? 'auto' : 100) }, 
+                        1: { cellWidth: 'auto', halign: 'center' },
+                        2: { cellWidth: 'auto', halign: 'center' }
+                    },
+                   didParseCell: data => {
+                       if (data.column.index === 0) data.cell.styles.fontStyle = 'bold';
+                   }
+                });
+                finalYAfterTable = doc.autoTable.previous.finalY;
+            }
+            
+            if (techLinks.size > 0) {
+                 if (finalYAfterTable > 240) { doc.addPage(); finalYAfterTable = 20; }
+                finalYAfterTable += 15;
+                doc.setFontSize(12); doc.setFont(undefined, 'bold');
+                doc.text("Fiches Techniques", 14, finalYAfterTable);
+                finalYAfterTable += 7;
+                doc.setFontSize(10); doc.setFont(undefined, 'normal');
+                for (const [url, title] of techLinks.entries()) {
+                    doc.setTextColor(0, 0, 238);
+                    doc.textWithLink(title, 14, finalYAfterTable, { url: url });
+                    finalYAfterTable += 6;
+                }
+                doc.setTextColor(0);
+            }
+
+            if (finalYAfterTable > 260) { doc.addPage(); finalYAfterTable = 20; }
+            finalYAfterTable += 15;
+            
+            const boxY = finalYAfterTable > 240 ? 20 : finalYAfterTable;
+            if (finalYAfterTable > 240) doc.addPage();
+            doc.setFillColor(220, 38, 38);
+            doc.rect(14, boxY, doc.internal.pageSize.getWidth() - 28, 28, 'F');
+            doc.setTextColor(255);
+            doc.setFont(undefined, 'bold');
+            doc.setFontSize(12);
+            doc.text("COMPLÉTEZ VOTRE GAMME CLUB", doc.internal.pageSize.getWidth() / 2, boxY + 8, { align: 'center' });
+            doc.setFont(undefined, 'normal');
+            doc.setFontSize(9);
+            const centerX = doc.internal.pageSize.getWidth() / 2;
+            doc.textWithLink("Cliquez pour découvrir notre catalogue sportswear et équiper vos membres.", centerX, boxY + 15, { url: 'https://acrobat.adobe.com/id/urn:aaid:sc:EU:9e2ca643-28a7-4bff-b46d-cc55f73c033c', align: 'center' });
+            doc.textWithLink("Cliquez pour nous contacter et obtenir un devis personnalisé.", centerX, boxY + 22, { url: 'mailto:wilfrid@noret.com', align: 'center' });
+            finalYAfterTable = boxY + 35;
+
+
+            doc.save(`${docTitle}_${quoteState.clubName.replace(/ /g, '_') || 'Interactif'}.pdf`);
+            return true;
         };
-        document.addEventListener('DOMContentLoaded', init);
+        
+        // --- APP INITIALIZATION ---
+        renderSidebarNavigation();
+        updateUI();
+    });
     </script>
 </body>
 </html>
+
+
+
+
+
+
+
+
+
+
+
